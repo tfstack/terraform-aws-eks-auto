@@ -1,0 +1,99 @@
+############################################
+# Provider Configuration
+############################################
+
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "5.84.0"
+    }
+  }
+}
+
+provider "aws" {
+  region = "ap-southeast-1"
+}
+
+############################################
+# Random Suffix for Resource Names
+############################################
+
+resource "random_string" "suffix" {
+  length  = 8
+  special = false
+  upper   = false
+}
+
+############################################
+# Data Sources
+############################################
+
+data "aws_region" "current" {}
+data "aws_availability_zones" "available" {}
+
+data "http" "my_public_ip" {
+  url = "http://ifconfig.me/ip"
+}
+
+############################################
+# Local Variables
+############################################
+
+locals {
+  name      = "cltest"
+  base_name = "${local.name}-${random_string.suffix.result}"
+
+  tags = {
+    Environment = "dev"
+    Project     = "example"
+  }
+}
+
+############################################
+# VPC Configuration
+############################################
+
+module "vpc" {
+  source = "tfstack/vpc/aws"
+
+  vpc_name           = local.base_name
+  vpc_cidr           = "10.0.0.0/16"
+  availability_zones = slice(data.aws_availability_zones.available.names, 0, 3)
+
+  public_subnets  = ["10.0.1.0/24", "10.0.2.0/24", "10.0.3.0/24"]
+  private_subnets = ["10.0.101.0/24", "10.0.102.0/24", "10.0.103.0/24"]
+
+  eic_subnet        = "none"
+  eic_ingress_cidrs = ["${data.http.my_public_ip.response_body}/32"]
+
+  jumphost_instance_create     = false
+  jumphost_subnet              = "10.0.0.0/24"
+  jumphost_log_prevent_destroy = false
+  create_igw                   = true
+  ngw_type                     = "single"
+
+  tags = local.tags
+}
+
+############################################
+# ECS Cluster Configuration
+############################################
+
+module "eks_auto" {
+  source = "../.."
+
+  vpc = {
+    id = module.vpc.vpc_id
+    private_subnets = [
+      for i, subnet in module.vpc.private_subnet_ids :
+      { id = subnet, cidr = module.vpc.private_subnet_cidrs[i] }
+    ]
+    # public_subnets = [
+    #   for i, subnet in module.vpc.public_subnet_ids :
+    #   { id = subnet, cidr = module.vpc.public_subnet_cidrs[i] }
+    # ]
+  }
+
+  cluster_name = local.name
+}
