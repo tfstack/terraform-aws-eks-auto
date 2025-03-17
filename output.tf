@@ -7,5 +7,5 @@ output "eks_cluster_endpoint" {
 }
 
 output "eks_fargate_role_arn" {
-  value = aws_iam_role.eks_fargate_role.arn
+  value = aws_iam_role.eks_auto.arn
 }

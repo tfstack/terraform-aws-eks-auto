@@ -1,43 +1,72 @@
-variable "vpc" {
-  description = "VPC configuration settings"
-  type = object({
-    id = string
-    private_subnets = list(object({
-      id   = string
-      cidr = string
-    }))
-  })
-
-  validation {
-    condition     = can(regex("^vpc-[a-f0-9]+$", var.vpc.id))
-    error_message = "The VPC ID must be in the format 'vpc-xxxxxxxxxxxxxxxxx'."
-  }
-
-  validation {
-    condition     = length(var.vpc.private_subnets) > 0
-    error_message = "At least one private subnet must be defined."
-  }
-
-  validation {
-    condition     = alltrue([for subnet in var.vpc.private_subnets : can(regex("^subnet-[a-f0-9]+$", subnet.id))])
-    error_message = "Each private subnet must have a valid subnet ID (e.g., 'subnet-xxxxxxxxxxxxxxxxx')."
-  }
-
-  validation {
-    condition     = alltrue([for subnet in var.vpc.private_subnets : can(regex("^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}/\\d{1,2}$", subnet.cidr))])
-    error_message = "Each subnet must have a valid CIDR block (e.g., '10.0.1.0/24')."
-  }
-}
-
-variable "tags" {
-  description = "A map of tags to use on all resources"
-  type        = map(string)
-  default     = {}
-}
-
 variable "cluster_name" {
   description = "Name of the EKS cluster"
   type        = string
+}
+
+variable "cluster_version" {
+  description = "EKS Kubernetes version"
+  type        = string
+}
+
+variable "vpc_id" {
+  description = "VPC ID where the EKS cluster will be deployed"
+  type        = string
+
+  validation {
+    condition     = can(regex("^vpc-[a-f0-9]+$", var.vpc_id))
+    error_message = "The VPC ID must be in the format 'vpc-xxxxxxxxxxxxxxxxx'."
+  }
+}
+
+variable "cluster_vpc_config" {
+  description = "VPC configuration for EKS"
+  type = object({
+    private_subnet_ids      = list(string)
+    private_access_cidrs    = list(string)
+    public_access_cidrs     = list(string)
+    security_group_ids      = list(string)
+    endpoint_private_access = bool
+    endpoint_public_access  = bool
+  })
+}
+
+variable "create_security_group" {
+  description = "Whether to create an internal security group for EKS"
+  type        = bool
+  default     = true
+}
+
+variable "enable_cluster_encryption" {
+  description = "Enable encryption for Kubernetes secrets using a KMS key"
+  type        = bool
+  default     = false
+}
+
+variable "enable_elastic_load_balancing" {
+  description = "Enable or disable Elastic Load Balancing for EKS Auto Mode"
+  type        = bool
+  default     = true
+}
+
+variable "cluster_enabled_log_types" {
+  description = "List of enabled cluster log types"
+  type        = list(string)
+  default     = []
+}
+
+variable "cluster_compute_config" {
+  description = "Compute configuration for EKS Auto Mode"
+  type = object({
+    node_pools = optional(list(object({
+      name           = string
+      instance_types = list(string)
+      min_size       = number
+      max_size       = number
+      desired_size   = number
+    })), [])
+    node_role_arn = optional(string, null)
+  })
+  default = {}
 }
 
 variable "eks_addons" {
@@ -78,187 +107,53 @@ variable "eks_addons" {
   }
 }
 
+variable "fargate_profiles" {
+  description = "Fargate profiles configuration"
+  type = map(object({
+    enabled   = bool
+    namespace = string
+  }))
+  default = {
+    default    = { enabled = true, namespace = "default" }
+    logging    = { enabled = false, namespace = "logging" }
+    monitoring = { enabled = false, namespace = "monitoring" }
+  }
+}
+
+variable "cluster_upgrade_policy" {
+  description = "Upgrade policy for EKS cluster"
+  type = object({
+    support_type = optional(string, null)
+  })
+  default = {}
+}
+
+variable "cluster_zonal_shift_config" {
+  description = "Zonal shift configuration"
+  type = object({
+    enabled = optional(bool, false)
+  })
+  default = {}
+}
+
+variable "timeouts" {
+  description = "Timeouts for EKS cluster creation, update, and deletion"
+  type = object({
+    create = optional(string, null)
+    update = optional(string, null)
+    delete = optional(string, null)
+  })
+  default = {}
+}
+
 variable "private_subnet_custom_tags" {
   description = "Optional custom tags for private subnets"
   type        = map(string)
   default     = {}
 }
 
-variable "cluster_name" {
-  description = "The name of the EKS cluster"
-  type        = string
-}
-
-variable "cluster_version" {
-  description = "EKS Kubernetes version"
-  type        = string
-}
-
-variable "cluster_role_arn" {
-  description = "IAM role ARN for the EKS cluster"
-  type        = string
-}
-
-variable "cluster_enabled_log_types" {
-  description = "List of enabled cluster log types"
-  type        = list(string)
-  default     = []
-}
-
-variable "cluster_compute_config" {
-  description = "Compute configuration for EKS Auto Mode"
-  type = object({
-    node_pools = optional(list(object({
-      name           = string
-      instance_types = list(string)
-      min_size       = number
-      max_size       = number
-      desired_size   = number
-    })), [])
-    node_role_arn = optional(string, null)
-  })
-  default = {}
-}
-
-variable "cluster_vpc_config" {
-  description = "VPC configuration for EKS"
-  type = object({
-    subnet_ids              = list(string)
-    security_group_ids      = list(string)
-    endpoint_private_access = bool
-    endpoint_public_access  = bool
-    public_access_cidrs     = list(string)
-  })
-}
-
-variable "cluster_encryption_config" {
-  description = "Encryption configuration for Kubernetes secrets"
-  type = object({
-    key_arn   = string
-    resources = list(string)
-  })
-  default = {
-    key_arn   = ""
-    resources = ["secrets"]
-  }
-}
-
-variable "cluster_upgrade_policy" {
-  description = "Upgrade policy for EKS cluster"
-  type = object({
-    support_type = optional(string, null)
-  })
-  default = {}
-}
-
-variable "cluster_zonal_shift_config" {
-  description = "Zonal shift configuration"
-  type = object({
-    enabled = optional(bool, false)
-  })
-  default = {}
-}
-
-
-variable "timeouts" {
-  description = "Timeouts for EKS cluster creation, update, and deletion"
-  type = object({
-    create = optional(string, null)
-    update = optional(string, null)
-    delete = optional(string, null)
-  })
-  default = {}
-}
-
-variable "cluster_version" {
-  description = "EKS Kubernetes version"
-  type        = string
-}
-
-variable "use_existing_role" {
-  description = "Set to true if using an existing IAM role for EKS"
-  type        = bool
-  default     = false
-}
-
-variable "existing_role_arn" {
-  description = "ARN of an existing IAM role for EKS (if use_existing_role is true)"
-  type        = string
-  default     = ""
-}
-
-variable "cluster_enabled_log_types" {
-  description = "List of enabled cluster log types"
-  type        = list(string)
-  default     = []
-}
-
-variable "cluster_compute_config" {
-  description = "Compute configuration for EKS Auto Mode"
-  type = object({
-    node_pools = optional(list(object({
-      name           = string
-      instance_types = list(string)
-      min_size       = number
-      max_size       = number
-      desired_size   = number
-    })), [])
-    node_role_arn = optional(string, null)
-  })
-  default = {}
-}
-
-variable "cluster_vpc_config" {
-  description = "VPC configuration for EKS"
-  type = object({
-    subnet_ids              = list(string)
-    security_group_ids      = list(string)
-    endpoint_private_access = bool
-    endpoint_public_access  = bool
-    public_access_cidrs     = list(string)
-  })
-}
-
-variable "cluster_encryption_config" {
-  description = "Encryption configuration for Kubernetes secrets"
-  type = object({
-    key_arn   = string
-    resources = list(string)
-  })
-  default = {
-    key_arn   = ""
-    resources = ["secrets"]
-  }
-}
-
-variable "cluster_upgrade_policy" {
-  description = "Upgrade policy for EKS cluster"
-  type = object({
-    support_type = optional(string, null)
-  })
-  default = {}
-}
-
-variable "cluster_zonal_shift_config" {
-  description = "Zonal shift configuration"
-  type = object({
-    enabled = optional(bool, false)
-  })
-  default = {}
-}
-
 variable "tags" {
-  description = "Tags to apply to the EKS cluster"
+  description = "A map of tags to use on all resources"
   type        = map(string)
   default     = {}
-}
-
-variable "timeouts" {
-  description = "Timeouts for EKS cluster creation, update, and deletion"
-  type = object({
-    create = optional(string, null)
-    update = optional(string, null)
-    delete = optional(string, null)
-  })
-  default = {}
 }

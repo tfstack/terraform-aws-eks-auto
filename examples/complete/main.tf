@@ -83,17 +83,53 @@ module "vpc" {
 module "eks_auto" {
   source = "../.."
 
-  vpc = {
-    id = module.vpc.vpc_id
-    private_subnets = [
-      for i, subnet in module.vpc.private_subnet_ids :
-      { id = subnet, cidr = module.vpc.private_subnet_cidrs[i] }
-    ]
-    # public_subnets = [
-    #   for i, subnet in module.vpc.public_subnet_ids :
-    #   { id = subnet, cidr = module.vpc.public_subnet_cidrs[i] }
-    # ]
+  vpc_id = module.vpc.vpc_id
+
+  cluster_name    = local.name
+  cluster_version = "1.32"
+
+  cluster_vpc_config = {
+    private_subnet_ids   = module.vpc.private_subnet_ids
+    private_access_cidrs = module.vpc.private_subnet_cidrs
+    public_access_cidrs  = ["0.0.0.0/0"]
+
+    security_group_ids = []
+
+    endpoint_private_access = true
+    endpoint_public_access  = false
   }
 
-  cluster_name = local.name
+  cluster_enabled_log_types = [
+    "api",
+    "audit",
+    "authenticator",
+    "controllerManager",
+    "scheduler"
+  ]
+
+  enable_cluster_encryption     = false
+  enable_elastic_load_balancing = true
+
+  eks_addons = [
+    { name = "coredns", version = "v1.11.4-eksbuild.2" },
+    { name = "kube-proxy", version = "v1.32.0-eksbuild.2" },
+    { name = "vpc-cni", version = "v1.19.2-eksbuild.5" },
+  ]
+
+  fargate_profiles = {
+    default = {
+      enabled   = true
+      namespace = "default"
+    }
+    logging = {
+      enabled   = false
+      namespace = "logging"
+    }
+    monitoring = {
+      enabled   = false
+      namespace = "monitoring"
+    }
+  }
+
+  tags = local.tags
 }
