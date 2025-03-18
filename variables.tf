@@ -79,11 +79,13 @@ variable "eks_addons" {
     resolve_conflicts_on_update = optional(string, "NONE")
     tags                        = optional(map(string), {})
     preserve                    = optional(bool, false)
+    fargate_required            = optional(bool, false)
+    namespace                   = optional(string, "kube-system")
+    label_override              = optional(string, null)
   }))
   default = [
-    { name = "coredns" },
-    { name = "kube-proxy" },
-    { name = "vpc-cni" }
+    { name = "kube-proxy", addon_version = "v1.32.0-eksbuild.2" },
+    { name = "vpc-cni", addon_version = "v1.19.2-eksbuild.5" }
   ]
 
   validation {
@@ -92,8 +94,14 @@ variable "eks_addons" {
   }
 
   validation {
-    condition     = alltrue([for addon in var.eks_addons : length(setsubtract(keys(addon), ["name", "addon_version", "configuration_values", "resolve_conflicts_on_create", "resolve_conflicts_on_update", "tags", "preserve"])) == 0])
-    error_message = "Each EKS add-on object must contain only the allowed attributes: 'name', 'addon_version', 'configuration_values', 'resolve_conflicts_on_create', 'resolve_conflicts_on_update', 'tags', 'preserve'."
+    condition = alltrue([
+      for addon in var.eks_addons : length(setsubtract(keys(addon), [
+        "name", "addon_version", "configuration_values", "resolve_conflicts_on_create",
+        "resolve_conflicts_on_update", "tags", "preserve", "fargate_required",
+        "namespace", "label_override"
+      ])) == 0
+    ])
+    error_message = "Each EKS add-on object must contain only the allowed attributes: 'name', 'addon_version', 'configuration_values', 'resolve_conflicts_on_create', 'resolve_conflicts_on_update', 'tags', 'preserve', 'fargate_required', 'namespace', 'label_override'."
   }
 
   validation {
@@ -108,15 +116,25 @@ variable "eks_addons" {
 }
 
 variable "fargate_profiles" {
-  description = "Fargate profiles configuration"
+  description = "Fargate profiles for EKS Auto Mode"
   type = map(object({
     enabled   = bool
     namespace = string
+    labels    = optional(map(string), {})
   }))
   default = {
-    default    = { enabled = true, namespace = "default" }
-    logging    = { enabled = false, namespace = "logging" }
-    monitoring = { enabled = false, namespace = "monitoring" }
+    default = {
+      enabled   = true
+      namespace = "default"
+    }
+    logging = {
+      enabled   = false
+      namespace = "logging"
+    }
+    monitoring = {
+      enabled   = false
+      namespace = "monitoring"
+    }
   }
 }
 

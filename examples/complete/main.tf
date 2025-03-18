@@ -111,9 +111,9 @@ module "eks_auto" {
   enable_elastic_load_balancing = true
 
   eks_addons = [
-    { name = "coredns", version = "v1.11.4-eksbuild.2" },
     { name = "kube-proxy", version = "v1.32.0-eksbuild.2" },
     { name = "vpc-cni", version = "v1.19.2-eksbuild.5" },
+    { name = "eks-pod-identity-agent" }
   ]
 
   fargate_profiles = {
@@ -132,4 +132,8 @@ module "eks_auto" {
   }
 
   tags = local.tags
+
+  private_subnet_custom_tags = {
+    test = "abc"
+  }
 }

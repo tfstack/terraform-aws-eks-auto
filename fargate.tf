@@ -1,5 +1,5 @@
 ##############################
-# EKS Fargate Profiles
+# EKS Fargate Profiles (Explicit)
 ##############################
 
 resource "aws_eks_fargate_profile" "default" {
@@ -36,5 +36,23 @@ resource "aws_eks_fargate_profile" "logging" {
 
   selector {
     namespace = "logging"
+  }
+}
+
+##############################
+# EKS Fargate Profiles (Dynamic for Add-ons)
+##############################
+
+resource "aws_eks_fargate_profile" "addons" {
+  for_each = { for addon in var.eks_addons : addon.name => addon if addon.fargate_required }
+
+  cluster_name           = aws_eks_cluster.this.name
+  fargate_profile_name   = each.value.name
+  pod_execution_role_arn = aws_iam_role.eks_auto.arn
+  subnet_ids             = var.cluster_vpc_config.private_subnet_ids
+
+  selector {
+    namespace = each.value.namespace
+    labels    = { "k8s-app" = coalesce(each.value.label_override, each.value.name) }
   }
 }
