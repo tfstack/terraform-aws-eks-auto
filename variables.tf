@@ -54,21 +54,6 @@ variable "cluster_enabled_log_types" {
   default     = []
 }
 
-variable "cluster_compute_config" {
-  description = "Compute configuration for EKS Auto Mode"
-  type = object({
-    node_pools = optional(list(object({
-      name           = string
-      instance_types = list(string)
-      min_size       = number
-      max_size       = number
-      desired_size   = number
-    })), [])
-    node_role_arn = optional(string, null)
-  })
-  default = {}
-}
-
 variable "eks_addons" {
   description = "List of EKS add-ons to install with optional configurations"
   type = list(object({
@@ -164,14 +149,55 @@ variable "timeouts" {
   default = {}
 }
 
-variable "private_subnet_custom_tags" {
-  description = "Optional custom tags for private subnets"
-  type        = map(string)
-  default     = {}
-}
-
 variable "tags" {
   description = "A map of tags to use on all resources"
   type        = map(string)
   default     = {}
+}
+
+variable "node_pools" {
+  description = "Node pools for EKS Auto Mode (valid: general-purpose, system)"
+  type        = list(string)
+  default     = ["general-purpose"]
+
+  validation {
+    condition     = alltrue([for pool in var.node_pools : contains(["general-purpose", "system"], pool)])
+    error_message = "Valid values for node_pools are: 'general-purpose' and 'system'."
+  }
+}
+
+variable "eks_view_access" {
+  description = "Configuration for assigning view access to EKS cluster"
+  type = object({
+    enabled    = bool
+    role_names = list(string)
+  })
+  default = {
+    enabled    = false
+    role_names = []
+  }
+
+  validation {
+    condition     = alltrue([for name in var.eks_view_access.role_names : can(regex("^[a-zA-Z0-9+=,.@_-]{1,128}$", name))])
+    error_message = "Each role name must be a valid IAM role name (1-128 characters, matching IAM naming rules)."
+  }
+}
+
+variable "apps" {
+  description = "List of Kubernetes apps"
+  type = list(object({
+    name             = string
+    namespace        = optional(string, "default")
+    image            = string
+    port             = optional(number, 80)
+    labels           = optional(map(string), {})
+    create_namespace = optional(bool, true)
+    enable_logging   = optional(bool, false)
+  }))
+}
+
+variable "enable_executor_cluster_admin" {
+  description = "Whether to grant AmazonEKSClusterAdminPolicy to the IAM role running Terraform"
+  type        = bool
+  default     = false
 }

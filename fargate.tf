@@ -5,7 +5,7 @@
 resource "aws_eks_fargate_profile" "default" {
   cluster_name           = aws_eks_cluster.this.name
   fargate_profile_name   = "default"
-  pod_execution_role_arn = aws_iam_role.eks_auto.arn
+  pod_execution_role_arn = aws_iam_role.eks_fargate.arn
   subnet_ids             = var.cluster_vpc_config.private_subnet_ids
 
   selector {
@@ -18,7 +18,7 @@ resource "aws_eks_fargate_profile" "monitoring" {
 
   cluster_name           = aws_eks_cluster.this.name
   fargate_profile_name   = "monitoring"
-  pod_execution_role_arn = aws_iam_role.eks_auto.arn
+  pod_execution_role_arn = aws_iam_role.eks_fargate.arn
   subnet_ids             = var.cluster_vpc_config.private_subnet_ids
 
   selector {
@@ -31,7 +31,7 @@ resource "aws_eks_fargate_profile" "logging" {
 
   cluster_name           = aws_eks_cluster.this.name
   fargate_profile_name   = "logging"
-  pod_execution_role_arn = aws_iam_role.eks_auto.arn
+  pod_execution_role_arn = aws_iam_role.eks_fargate.arn
   subnet_ids             = var.cluster_vpc_config.private_subnet_ids
 
   selector {
@@ -48,7 +48,7 @@ resource "aws_eks_fargate_profile" "addons" {
 
   cluster_name           = aws_eks_cluster.this.name
   fargate_profile_name   = each.value.name
-  pod_execution_role_arn = aws_iam_role.eks_auto.arn
+  pod_execution_role_arn = aws_iam_role.eks_fargate.arn
   subnet_ids             = var.cluster_vpc_config.private_subnet_ids
 
   selector {

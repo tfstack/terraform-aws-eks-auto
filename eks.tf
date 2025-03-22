@@ -1,32 +1,10 @@
 ##############################
-# VPC Tags for Private Subnets
-##############################
-
-# Default required tag for private subnets
-resource "aws_ec2_tag" "private_subnet_default_tag" {
-  for_each = { for idx, subnet_id in var.cluster_vpc_config.private_subnet_ids : idx => subnet_id }
-
-  resource_id = each.value
-  key         = "kubernetes.io/role/internal-elb"
-  value       = "1"
-}
-
-# Custom tags for private subnets
-resource "aws_ec2_tag" "private_subnet_custom_tags" {
-  count = length(var.cluster_vpc_config.private_subnet_ids) * length(var.private_subnet_custom_tags)
-
-  resource_id = var.cluster_vpc_config.private_subnet_ids[floor(count.index / length(var.private_subnet_custom_tags))]
-  key         = element(keys(var.private_subnet_custom_tags), count.index % length(var.private_subnet_custom_tags))
-  value       = element(values(var.private_subnet_custom_tags), count.index % length(var.private_subnet_custom_tags))
-}
-
-##############################
 # EKS Cluster Configuration
 ##############################
 
 resource "aws_eks_cluster" "this" {
   name                      = var.cluster_name
-  role_arn                  = aws_iam_role.eks_auto.arn
+  role_arn                  = aws_iam_role.eks_fargate.arn
   version                   = var.cluster_version
   enabled_cluster_log_types = var.cluster_enabled_log_types
 
@@ -39,8 +17,8 @@ resource "aws_eks_cluster" "this" {
 
   compute_config {
     enabled       = true
-    node_pools    = try([for pool in var.cluster_compute_config.node_pools : pool.name], [])
-    node_role_arn = try(var.cluster_compute_config.node_role_arn, null)
+    node_pools    = var.node_pools
+    node_role_arn = aws_iam_role.eks_auto_nodes.arn
   }
 
   vpc_config {
@@ -94,4 +72,8 @@ resource "aws_eks_cluster" "this" {
     update = try(var.timeouts.update, null)
     delete = try(var.timeouts.delete, null)
   }
+
+  depends_on = [
+    aws_iam_role_policy_attachment.eks_cluster
+  ]
 }

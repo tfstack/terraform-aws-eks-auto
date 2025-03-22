@@ -64,16 +64,28 @@ module "vpc" {
   public_subnets  = ["10.0.1.0/24", "10.0.2.0/24", "10.0.3.0/24"]
   private_subnets = ["10.0.101.0/24", "10.0.102.0/24", "10.0.103.0/24"]
 
-  eic_subnet        = "none"
+  eic_subnet        = "jumphost"
   eic_ingress_cidrs = ["${data.http.my_public_ip.response_body}/32"]
 
-  jumphost_instance_create     = false
   jumphost_subnet              = "10.0.0.0/24"
+  jumphost_allow_egress        = true
+  jumphost_instance_create     = true
+  jumphost_user_data_file      = "${path.module}/external/cloud-init.sh"
   jumphost_log_prevent_destroy = false
-  create_igw                   = true
-  ngw_type                     = "single"
+  jumphost_inline_policy_arns = [
+    # "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy",
+    # "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy",
+    # "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy",
+    # "arn:aws:iam::aws:policy/IAMReadOnlyAccess",
+    # "arn:aws:iam::aws:policy/AmazonEC2ReadOnlyAccess"
+  ]
+
+  create_igw = true
+  ngw_type   = "single"
 
   tags = local.tags
+
+  enable_eks_tags = true
 }
 
 ############################################
@@ -91,12 +103,14 @@ module "eks_auto" {
   cluster_vpc_config = {
     private_subnet_ids   = module.vpc.private_subnet_ids
     private_access_cidrs = module.vpc.private_subnet_cidrs
-    public_access_cidrs  = ["0.0.0.0/0"]
+    public_access_cidrs = [
+      "${data.http.my_public_ip.response_body}/32"
+    ] # exercise with cautious
 
     security_group_ids = []
 
     endpoint_private_access = true
-    endpoint_public_access  = false
+    endpoint_public_access  = true # exercise with cautious
   }
 
   cluster_enabled_log_types = [
@@ -110,10 +124,12 @@ module "eks_auto" {
   enable_cluster_encryption     = false
   enable_elastic_load_balancing = true
 
+  node_pools = ["general-purpose"]
+
   eks_addons = [
     { name = "kube-proxy", version = "v1.32.0-eksbuild.2" },
     { name = "vpc-cni", version = "v1.19.2-eksbuild.5" },
-    { name = "eks-pod-identity-agent" }
+    { name = "eks-pod-identity-agent", version = "v1.3.4-eksbuild.1" }
   ]
 
   fargate_profiles = {
@@ -131,9 +147,34 @@ module "eks_auto" {
     }
   }
 
-  tags = local.tags
-
-  private_subnet_custom_tags = {
-    test = "abc"
+  eks_view_access = {
+    enabled = true
+    role_names = [
+      "${local.base_name}-jumphost"
+    ]
   }
+
+  apps = [
+    {
+      name  = "hello-world"
+      image = "public.ecr.aws/nginx/nginx:latest"
+    },
+    {
+      name  = "nginx"
+      image = "nginx:1.25"
+      port  = 8080
+      labels = {
+        env = "dev"
+      }
+    }
+  ]
+
+  enable_executor_cluster_admin = true
+
+  tags = local.tags
+}
+
+output "all_module_outputs" {
+  description = "All outputs from the EKS Auto module"
+  value       = module.eks_auto
 }
