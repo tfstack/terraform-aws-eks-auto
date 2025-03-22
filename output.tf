@@ -17,3 +17,7 @@ output "apps_deployed" {
 output "apps_namespace_map" {
   value = module.apps[0].app_namespaces
 }
+
+output "test" {
+  value = module.logging
+}

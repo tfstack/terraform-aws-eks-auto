@@ -68,17 +68,10 @@ module "vpc" {
   eic_ingress_cidrs = ["${data.http.my_public_ip.response_body}/32"]
 
   jumphost_subnet              = "10.0.0.0/24"
-  jumphost_allow_egress        = true
-  jumphost_instance_create     = true
+  jumphost_allow_egress        = false
+  jumphost_instance_create     = false
   jumphost_user_data_file      = "${path.module}/external/cloud-init.sh"
   jumphost_log_prevent_destroy = false
-  jumphost_inline_policy_arns = [
-    # "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy",
-    # "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy",
-    # "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy",
-    # "arn:aws:iam::aws:policy/IAMReadOnlyAccess",
-    # "arn:aws:iam::aws:policy/AmazonEC2ReadOnlyAccess"
-  ]
 
   create_igw = true
   ngw_type   = "single"
@@ -138,7 +131,7 @@ module "eks_auto" {
       namespace = "default"
     }
     logging = {
-      enabled   = false
+      enabled   = true
       namespace = "logging"
     }
     monitoring = {
@@ -147,29 +140,57 @@ module "eks_auto" {
     }
   }
 
-  eks_view_access = {
-    enabled = true
-    role_names = [
-      "${local.base_name}-jumphost"
-    ]
-  }
+  # eks_view_access = {
+  # enabled = true
+  # role_names = [
+  #   "${local.base_name}-jumphost"
+  # ]
+  # }
 
-  apps = [
-    {
-      name  = "hello-world"
-      image = "public.ecr.aws/nginx/nginx:latest"
+  apps = [{
+    name             = "hello-world"
+    image            = "public.ecr.aws/nginx/nginx:latest"
+    port             = 80
+    namespace        = "default"
+    create_namespace = false
+    enable_logging   = true
     },
     {
       name  = "nginx"
       image = "nginx:1.25"
       port  = 8080
+
       labels = {
         env = "dev"
       }
+
+      healthcheck = {
+        liveness = {
+          http_get = {
+            path = "/"
+            port = 8080
+          }
+          initial_delay_seconds = 5
+          period_seconds        = 10
+        }
+
+        readiness = {
+          http_get = {
+            path = "/"
+            port = 8080
+          }
+          initial_delay_seconds = 3
+          period_seconds        = 5
+        }
+      }
     }
+
   ]
 
   enable_executor_cluster_admin = true
+
+  eks_log_prevent_destroy = false
+  eks_log_retention_days  = 1
 
   tags = local.tags
 }

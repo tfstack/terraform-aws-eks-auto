@@ -1,11 +1,13 @@
 variable "apps" {
   description = "List of Kubernetes apps to deploy"
   type = list(object({
-    name      = string
-    namespace = optional(string, "default")
-    image     = string
-    port      = optional(number, 80)
-    labels    = optional(map(string), {})
+    name             = string
+    image            = string
+    port             = number
+    namespace        = optional(string, "default")
+    labels           = optional(map(string), {})
+    create_namespace = optional(bool, true)
+    enable_logging   = optional(bool, false)
   }))
 }
 

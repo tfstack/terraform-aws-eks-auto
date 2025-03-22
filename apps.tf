@@ -12,6 +12,7 @@ module "apps" {
   }
 
   depends_on = [
-    aws_eks_access_policy_association.terraform_executor
+    aws_eks_access_policy_association.terraform_executor,
+    module.logging
   ]
 }

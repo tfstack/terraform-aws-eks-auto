@@ -8,6 +8,17 @@ resource "kubernetes_namespace" "this" {
 
   metadata {
     name = each.key
+
+    annotations = merge(
+      {
+        "eks.amazonaws.com/compute-type" = "fargate"
+      },
+      lookup(each.value, "enable_logging", false) ? {
+        "eks.amazonaws.com/enable-logging" = "true"
+        } : {
+        "eks.amazonaws.com/enable-logging" = "false"
+      }
+    )
   }
 }
 
@@ -16,7 +27,7 @@ resource "kubernetes_deployment" "this" {
 
   metadata {
     name      = each.key
-    namespace = each.value.namespace
+    namespace = coalesce(each.value.namespace, "default")
     labels    = merge({ app = each.key }, each.value.labels)
   }
 
@@ -34,6 +45,15 @@ resource "kubernetes_deployment" "this" {
         labels = {
           app = each.key
         }
+
+        annotations = merge(
+          {},
+          lookup(each.value, "enable_logging", false) ? {
+            "eks.amazonaws.com/enable-logging" = "true"
+            } : {
+            "eks.amazonaws.com/enable-logging" = "false"
+          }
+        )
       }
 
       spec {
@@ -43,6 +63,30 @@ resource "kubernetes_deployment" "this" {
 
           port {
             container_port = each.value.port
+          }
+
+          dynamic "liveness_probe" {
+            for_each = try([each.value.healthcheck.liveness], [])
+            content {
+              http_get {
+                path = liveness_probe.value.http_get.path
+                port = liveness_probe.value.http_get.port
+              }
+              initial_delay_seconds = liveness_probe.value.initial_delay_seconds
+              period_seconds        = liveness_probe.value.period_seconds
+            }
+          }
+
+          dynamic "readiness_probe" {
+            for_each = try([each.value.healthcheck.readiness], [])
+            content {
+              http_get {
+                path = readiness_probe.value.http_get.path
+                port = readiness_probe.value.http_get.port
+              }
+              initial_delay_seconds = readiness_probe.value.initial_delay_seconds
+              period_seconds        = readiness_probe.value.period_seconds
+            }
           }
         }
       }

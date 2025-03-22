@@ -73,51 +73,71 @@ resource "aws_iam_role_policy" "eks_fargate" {
   role = aws_iam_role.eks_fargate.name
 
   policy = jsonencode({
-    Version = "2012-10-17"
+    Version = "2012-10-17",
     Statement = [
       {
-        Sid    = "EKSFargateClusterAccess"
-        Effect = "Allow"
+        Sid    = "EKSFargateClusterAccess",
+        Effect = "Allow",
         Action = [
           "eks:AccessKubernetesApi",
           "eks:DescribeFargateProfile",
           "eks:ListFargateProfiles",
           "eks:DescribeCluster",
           "eks:ListClusters"
-        ]
+        ],
         Resource = "*"
       },
       {
-        Sid    = "AllowLogging"
-        Effect = "Allow"
-        Action = [
-          "logs:CreateLogStream",
-          "logs:PutLogEvents"
-        ]
-        Resource = "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:/aws/eks/${var.cluster_name}/*"
-      },
-      {
-        Sid    = "AllowECRPull"
-        Effect = "Allow"
+        Sid    = "AllowECRPull",
+        Effect = "Allow",
         Action = [
           "ecr:GetAuthorizationToken",
           "ecr:BatchCheckLayerAvailability",
           "ecr:BatchGetImage",
           "ecr:GetDownloadUrlForLayer"
-        ]
+        ],
         Resource = "*"
       },
       {
-        Sid      = "AllowSecretsManagerAccess"
-        Effect   = "Allow"
-        Action   = ["secretsmanager:GetSecretValue"]
+        Sid      = "AllowSecretsManagerAccess",
+        Effect   = "Allow",
+        Action   = ["secretsmanager:GetSecretValue"],
         Resource = "arn:aws:secretsmanager:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:secret:eks/*"
       },
       {
-        Sid      = "AllowKMSDecrypt"
-        Effect   = "Allow"
-        Action   = ["kms:Decrypt"]
+        Sid      = "AllowKMSDecrypt",
+        Effect   = "Allow",
+        Action   = ["kms:Decrypt"],
         Resource = "arn:aws:kms:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:key/*"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy" "eks_fargate_logging" {
+  count = local.enable_cloudwatch_logging ? 1 : 0
+
+  name = "EKSFargateLogging"
+  role = aws_iam_role.eks_fargate.name
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Sid      = "CreateLogGroup",
+        Effect   = "Allow",
+        Action   = "logs:CreateLogGroup",
+        Resource = "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:/aws/eks/${var.cluster_name}/logs"
+      },
+      {
+        Sid    = "StreamAndPutLogs",
+        Effect = "Allow",
+        Action = [
+          "logs:CreateLogStream",
+          "logs:PutLogEvents",
+          "logs:DescribeLogStreams"
+        ],
+        Resource = "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:/aws/eks/${var.cluster_name}/logs:*"
       }
     ]
   })

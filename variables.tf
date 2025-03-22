@@ -187,9 +187,9 @@ variable "apps" {
   description = "List of Kubernetes apps"
   type = list(object({
     name             = string
-    namespace        = optional(string, "default")
     image            = string
-    port             = optional(number, 80)
+    port             = number
+    namespace        = optional(string, "default")
     labels           = optional(map(string), {})
     create_namespace = optional(bool, true)
     enable_logging   = optional(bool, false)
@@ -200,4 +200,16 @@ variable "enable_executor_cluster_admin" {
   description = "Whether to grant AmazonEKSClusterAdminPolicy to the IAM role running Terraform"
   type        = bool
   default     = false
+}
+
+variable "eks_log_prevent_destroy" {
+  description = "Whether to prevent the destruction of the CloudWatch log group"
+  type        = bool
+  default     = true
+}
+
+variable "eks_log_retention_days" {
+  description = "The number of days to retain logs for the EKS in CloudWatch"
+  type        = number
+  default     = 30
 }
