@@ -6,13 +6,6 @@ data "aws_region" "current" {}
 
 data "aws_caller_identity" "current" {}
 
-locals {
-  enable_cloudwatch_logging = length([
-    for app in var.apps : app
-    if try(app.enable_logging, false)
-  ]) > 0
-}
-
 ##############################
 # IAM Role for EKS Cluster
 ##############################
@@ -80,7 +73,6 @@ resource "aws_iam_role_policy_attachment" "eks_fargate" {
   policy_arn = each.value
 }
 
-
 ##############################
 # Custom Inline Policies for Fargate
 ##############################
@@ -131,7 +123,7 @@ resource "aws_iam_role_policy" "eks_fargate" {
 }
 
 resource "aws_iam_role_policy" "eks_fargate_logging" {
-  count = local.enable_cloudwatch_logging ? 1 : 0
+  count = var.enable_cloudwatch_logging ? 1 : 0
 
   name = "EKSFargateLogging"
   role = aws_iam_role.eks_fargate.name
@@ -154,6 +146,56 @@ resource "aws_iam_role_policy" "eks_fargate_logging" {
           "logs:DescribeLogStreams"
         ],
         Resource = "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:/aws/eks/${var.cluster_name}/logs:*"
+      }
+    ]
+  })
+}
+
+##############################
+# IAM Role for EKS Auto Mode Nodes
+##############################
+
+resource "aws_iam_role" "eks_auto_nodes" {
+  name = "${var.cluster_name}-eks-auto-nodes"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Principal = {
+        Service = "eks.amazonaws.com"
+      }
+      Action = "sts:AssumeRole"
+    }]
+  })
+}
+
+resource "aws_iam_role_policy" "eks_auto_nodes" {
+  name = "${var.cluster_name}-eks-auto-nodes"
+  role = aws_iam_role.eks_auto_nodes.name
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "AllowMinimalWorkerNodeAccess"
+        Effect = "Allow"
+        Action = [
+          "eks:DescribeCluster",
+          "eks:ListClusters"
+        ]
+        Resource = "*"
+      },
+      {
+        Sid    = "AllowContainerRegistryPull"
+        Effect = "Allow"
+        Action = [
+          "ecr:GetAuthorizationToken",
+          "ecr:BatchCheckLayerAvailability",
+          "ecr:BatchGetImage",
+          "ecr:GetDownloadUrlForLayer"
+        ]
+        Resource = "*"
       }
     ]
   })

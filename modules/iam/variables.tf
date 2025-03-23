@@ -7,23 +7,8 @@ variable "cluster_name" {
   type        = string
 }
 
-variable "apps" {
-  description = "List of Kubernetes apps"
-  type = list(object({
-    name             = string
-    image            = string
-    port             = number
-    namespace        = optional(string, "default")
-    labels           = optional(map(string), {})
-    create_namespace = optional(bool, true)
-    enable_logging   = optional(bool, false)
-
-    autoscaling = optional(object({
-      enabled                           = bool
-      min_replicas                      = number
-      max_replicas                      = number
-      target_cpu_utilization_percentage = number
-    }))
-  }))
-  default = []
+variable "enable_cloudwatch_logging" {
+  description = "Whether to enable CloudWatch logging for EKS workloads (e.g., Fluent Bit, Fargate logs)"
+  type        = bool
+  default     = false
 }

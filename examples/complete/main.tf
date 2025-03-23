@@ -66,7 +66,7 @@ module "vpc" {
   public_subnets  = ["10.0.1.0/24", "10.0.2.0/24", "10.0.3.0/24"]
   private_subnets = ["10.0.101.0/24", "10.0.102.0/24", "10.0.103.0/24"]
 
-  eic_subnet        = "jumphost"
+  eic_subnet        = "none"
   eic_ingress_cidrs = ["${data.http.my_public_ip.response_body}/32"]
 
   jumphost_subnet              = "10.0.0.0/24"
@@ -92,7 +92,9 @@ module "eks_auto" {
   # General Config
   ############################################
   #   vpc_id                        = module.vpc.vpc_id
-  cluster_name = local.name
+  cluster_name    = local.name
+  cluster_version = "latest"
+
   #   cluster_version               = local.eks_cluster_version
   #   tags                          = local.tags
   #   node_pools                    = ["general-purpose"]
