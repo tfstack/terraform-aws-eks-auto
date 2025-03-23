@@ -8,9 +8,17 @@ variable "cluster_name" {
 }
 
 variable "cluster_version" {
-  description = "EKS Kubernetes version"
+  description = <<EOF
+EKS Kubernetes version
+
+Optional. Use:
+- A specific version (e.g. "1.29") to pin the cluster version
+- "latest" or null to let EKS use the latest version at creation
+EOF
   type        = string
+  default     = null
 }
+
 
 # variable "eks_view_access" {
 #   description = "Configuration for assigning view access to EKS cluster"
