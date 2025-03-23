@@ -83,33 +83,7 @@ module "vpc" {
   enable_eks_tags = true
 }
 
-############################################
-# ECS Cluster Configuration
-############################################
 
-data "aws_eks_addon_version" "vpc_cni_latest" {
-  addon_name         = "vpc-cni"
-  kubernetes_version = local.eks_cluster_version
-  most_recent        = true
-}
-
-data "aws_eks_addon_version" "kube_proxy_latest" {
-  addon_name         = "kube-proxy"
-  kubernetes_version = local.eks_cluster_version
-  most_recent        = true
-}
-
-data "aws_eks_addon_version" "eks_pod_identity_agent_latest" {
-  addon_name         = "eks-pod-identity-agent"
-  kubernetes_version = local.eks_cluster_version
-  most_recent        = true
-}
-
-data "aws_eks_addon_version" "metrics_server_latest" {
-  addon_name         = "metrics-server"
-  kubernetes_version = local.eks_cluster_version
-  most_recent        = true
-}
 
 module "eks_auto" {
   source = "../.."
@@ -117,98 +91,98 @@ module "eks_auto" {
   ############################################
   # General Config
   ############################################
-  vpc_id                        = module.vpc.vpc_id
-  cluster_name                  = local.name
-  cluster_version               = local.eks_cluster_version
-  tags                          = local.tags
-  node_pools                    = ["general-purpose"]
-  enable_executor_cluster_admin = true
+  #   vpc_id                        = module.vpc.vpc_id
+  cluster_name = local.name
+  #   cluster_version               = local.eks_cluster_version
+  #   tags                          = local.tags
+  #   node_pools                    = ["general-purpose"]
+  #   enable_executor_cluster_admin = true
 
-  ############################################
-  # Networking
-  ############################################
-  cluster_vpc_config = {
-    private_subnet_ids   = module.vpc.private_subnet_ids
-    private_access_cidrs = module.vpc.private_subnet_cidrs
-    public_access_cidrs = [
-      "${data.http.my_public_ip.response_body}/32"
-    ] # exercise with cautious
+  #   ############################################
+  #   # Networking
+  #   ############################################
+  #   cluster_vpc_config = {
+  #     private_subnet_ids   = module.vpc.private_subnet_ids
+  #     private_access_cidrs = module.vpc.private_subnet_cidrs
+  #     public_access_cidrs = [
+  #       "${data.http.my_public_ip.response_body}/32"
+  #     ] # exercise with cautious
 
-    security_group_ids      = []
-    endpoint_private_access = true
-    endpoint_public_access  = true # exercise with cautious
-  }
+  #     security_group_ids      = []
+  #     endpoint_private_access = true
+  #     endpoint_public_access  = true # exercise with cautious
+  #   }
 
-  ############################################
-  # Logging & Monitoring
-  ############################################
-  cluster_enabled_log_types = [
-    "api",
-    "audit",
-    "authenticator",
-    "controllerManager",
-    "scheduler"
-  ]
-
-  enable_cluster_encryption     = false
-  enable_elastic_load_balancing = true
-  eks_log_prevent_destroy       = false
-  eks_log_retention_days        = 1
-
-  ############################################
-  # Addons
-  ############################################
-  eks_addons = [
-    {
-      name    = "kube-proxy",
-      version = data.aws_eks_addon_version.kube_proxy_latest.version
-    },
-    { name    = "vpc-cni",
-      version = data.aws_eks_addon_version.vpc_cni_latest.version
-    },
-    {
-      name    = "eks-pod-identity-agent",
-      version = data.aws_eks_addon_version.eks_pod_identity_agent_latest.version
-    },
-    # {
-    #   name                        = "metrics-server",
-    #   resolve_conflicts_on_create = "OVERWRITE",
-    #   resolve_conflicts_on_update = "OVERWRITE",
-    #   version                     = data.aws_eks_addon_version.metrics_server_latest.version
-    # }
-  ]
-
-  ############################################
-  # Fargate Profiles
-  ############################################
-  fargate_profiles = {
-    default = {
-      enabled   = true
-      namespace = "default"
-    }
-    logging = {
-      enabled   = true
-      namespace = "logging"
-    }
-    monitoring = {
-      enabled   = false
-      namespace = "monitoring"
-    }
-    kube_system = {
-      enabled   = true
-      namespace = "kube-system"
-    }
-  }
-
-  ############################################
-  # EKS View Access
-  ############################################
-  # eks_view_access = {
-  #   enabled = true
-  #   role_names = [
-  #     "${local.base_name}-jumphost"
+  #   ############################################
+  #   # Logging & Monitoring
+  #   ############################################
+  #   cluster_enabled_log_types = [
+  #     "api",
+  #     "audit",
+  #     "authenticator",
+  #     "controllerManager",
+  #     "scheduler"
   #   ]
-  # }
+
+  #   enable_cluster_encryption     = false
+  #   enable_elastic_load_balancing = true
+  #   eks_log_prevent_destroy       = false
+  #   eks_log_retention_days        = 1
+
+  #   ############################################
+  #   # Addons
+  #   ############################################
+  #   eks_addons = [
+  #     {
+  #       name    = "kube-proxy",
+  #       version = data.aws_eks_addon_version.kube_proxy_latest.version
+  #     },
+  #     { name    = "vpc-cni",
+  #       version = data.aws_eks_addon_version.vpc_cni_latest.version
+  #     },
+  #     {
+  #       name    = "eks-pod-identity-agent",
+  #       version = data.aws_eks_addon_version.eks_pod_identity_agent_latest.version
+  #     },
+  #     # {
+  #     #   name                        = "metrics-server",
+  #     #   resolve_conflicts_on_create = "OVERWRITE",
+  #     #   resolve_conflicts_on_update = "OVERWRITE",
+  #     #   version                     = data.aws_eks_addon_version.metrics_server_latest.version
+  #     # }
+  #   ]
+
+  #   ############################################
+  #   # Fargate Profiles
+  #   ############################################
+  #   fargate_profiles = {
+  #     default = {
+  #       enabled   = true
+  #       namespace = "default"
+  #     }
+  #     logging = {
+  #       enabled   = true
+  #       namespace = "logging"
+  #     }
+  #     monitoring = {
+  #       enabled   = false
+  #       namespace = "monitoring"
+  #     }
+  #     kube_system = {
+  #       enabled   = true
+  #       namespace = "kube-system"
+  #     }
+  #   }
+
+  #   ############################################
+  #   # EKS View Access
+  #   ############################################
+  #   # eks_view_access = {
+  #   #   enabled = true
+  #   #   role_names = [
+  #   #     "${local.base_name}-jumphost"
+  #   #   ]
+  #   # }
 
   ############################################
   # Apps
