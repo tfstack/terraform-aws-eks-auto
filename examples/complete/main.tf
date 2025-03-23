@@ -87,8 +87,26 @@ module "vpc" {
 # ECS Cluster Configuration
 ############################################
 
-data "aws_eks_addon_version" "latest" {
+data "aws_eks_addon_version" "vpc_cni_latest" {
   addon_name         = "vpc-cni"
+  kubernetes_version = local.eks_cluster_version
+  most_recent        = true
+}
+
+data "aws_eks_addon_version" "kube_proxy_latest" {
+  addon_name         = "kube-proxy"
+  kubernetes_version = local.eks_cluster_version
+  most_recent        = true
+}
+
+data "aws_eks_addon_version" "eks_pod_identity_agent_latest" {
+  addon_name         = "eks-pod-identity-agent"
+  kubernetes_version = local.eks_cluster_version
+  most_recent        = true
+}
+
+data "aws_eks_addon_version" "metrics_server_latest" {
+  addon_name         = "metrics-server"
   kubernetes_version = local.eks_cluster_version
   most_recent        = true
 }
@@ -141,9 +159,23 @@ module "eks_auto" {
   # Addons
   ############################################
   eks_addons = [
-    { name = "kube-proxy", version = "v1.32.0-eksbuild.2" },
-    { name = "vpc-cni", version = "v1.19.2-eksbuild.5" },
-    { name = "eks-pod-identity-agent", version = "v1.3.4-eksbuild.1" }
+    {
+      name    = "kube-proxy",
+      version = data.aws_eks_addon_version.kube_proxy_latest.version
+    },
+    { name    = "vpc-cni",
+      version = data.aws_eks_addon_version.vpc_cni_latest.version
+    },
+    {
+      name    = "eks-pod-identity-agent",
+      version = data.aws_eks_addon_version.eks_pod_identity_agent_latest.version
+    },
+    # {
+    #   name                        = "metrics-server",
+    #   resolve_conflicts_on_create = "OVERWRITE",
+    #   resolve_conflicts_on_update = "OVERWRITE",
+    #   version                     = data.aws_eks_addon_version.metrics_server_latest.version
+    # }
   ]
 
   ############################################
@@ -191,9 +223,10 @@ module "eks_auto" {
       enable_logging   = true
     },
     {
-      name  = "nginx"
-      image = "nginx:1.25"
-      port  = 8080
+      name           = "nginx"
+      image          = "nginx:1.25"
+      port           = 8080
+      enable_logging = true
 
       labels = {
         env = "dev"
@@ -230,6 +263,17 @@ module "eks_auto" {
         min_replicas                      = 2
         max_replicas                      = 5
         target_cpu_utilization_percentage = 60
+      }
+
+      healthcheck = {
+        readiness = {
+          http_get = {
+            path = "/"
+            port = 80
+          }
+          initial_delay_seconds = 5
+          period_seconds        = 10
+        }
       }
     }
   ]

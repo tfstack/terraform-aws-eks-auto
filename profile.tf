@@ -40,7 +40,7 @@ resource "aws_eks_fargate_profile" "logging" {
 }
 
 resource "aws_eks_fargate_profile" "kube_system" {
-  count = var.fargate_profiles.kube_system.enabled ? 1 : 0
+  # count = var.fargate_profiles.kube_system.enabled ? 1 : 0
 
   cluster_name           = aws_eks_cluster.this.name
   fargate_profile_name   = "kube-system"

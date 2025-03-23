@@ -36,7 +36,7 @@ resource "kubernetes_deployment" "this" {
   }
 
   spec {
-    replicas = 1
+    replicas = try(each.value.autoscaling.enabled, false) ? null : 1
 
     selector {
       match_labels = {
@@ -96,6 +96,10 @@ resource "kubernetes_deployment" "this" {
         }
       }
     }
+  }
+
+  lifecycle {
+    ignore_changes = [spec[0].replicas]
   }
 }
 

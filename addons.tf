@@ -12,6 +12,10 @@ resource "aws_eks_addon" "this" {
 
   depends_on = [
     aws_eks_cluster.this,
-    aws_eks_fargate_profile.addons
+    aws_eks_fargate_profile.addons,
+    aws_eks_fargate_profile.default,
+    aws_eks_fargate_profile.kube_system,
+    aws_eks_fargate_profile.logging,
+    aws_eks_fargate_profile.monitoring
   ]
 }
