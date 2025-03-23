@@ -1,5 +1,5 @@
 variable "apps" {
-  description = "List of Kubernetes apps to deploy"
+  description = "List of Kubernetes apps"
   type = list(object({
     name             = string
     image            = string
@@ -8,7 +8,15 @@ variable "apps" {
     labels           = optional(map(string), {})
     create_namespace = optional(bool, true)
     enable_logging   = optional(bool, false)
+
+    autoscaling = optional(object({
+      enabled                           = bool
+      min_replicas                      = number
+      max_replicas                      = number
+      target_cpu_utilization_percentage = number
+    }))
   }))
+  default = []
 }
 
 variable "cluster_name" {

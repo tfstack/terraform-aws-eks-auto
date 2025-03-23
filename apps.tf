@@ -13,6 +13,11 @@ module "apps" {
 
   depends_on = [
     aws_eks_access_policy_association.terraform_executor,
+    aws_eks_addon.this,
+    aws_eks_fargate_profile.default,
+    aws_eks_fargate_profile.monitoring,
+    aws_eks_fargate_profile.logging,
+    aws_eks_fargate_profile.addons,
     module.logging
   ]
 }

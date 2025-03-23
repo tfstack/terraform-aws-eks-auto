@@ -1,32 +1,40 @@
-# resource "aws_cloudwatch_log_group" "eks_cluster_with_prevent_destroy" {
-#   count = var.eks_log_prevent_destroy ? 1 : 0
+##############################
+# CloudWatch Log Groups for EKS Cluster
+##############################
 
-#   name              = "/aws/eks/${var.cluster_name}/cluster"
-#   retention_in_days = var.eks_log_retention_days
+resource "aws_cloudwatch_log_group" "eks_cluster_with_prevent_destroy" {
+  count = var.eks_log_prevent_destroy ? 1 : 0
 
-#   lifecycle {
-#     prevent_destroy = true
-#   }
+  name              = "/aws/eks/${var.cluster_name}/cluster"
+  retention_in_days = var.eks_log_retention_days
 
-#   tags = {
-#     Name = "${var.cluster_name}-cluster"
-#   }
-# }
+  lifecycle {
+    prevent_destroy = true
+  }
 
-# resource "aws_cloudwatch_log_group" "eks_cluster_without_prevent_destroy" {
-#   count = var.eks_log_prevent_destroy ? 0 : 1
+  tags = {
+    Name = "${var.cluster_name}-cluster"
+  }
+}
 
-#   name              = "/aws/eks/${var.cluster_name}/cluster"
-#   retention_in_days = var.eks_log_retention_days
+resource "aws_cloudwatch_log_group" "eks_cluster_without_prevent_destroy" {
+  count = var.eks_log_prevent_destroy ? 0 : 1
 
-#   lifecycle {
-#     prevent_destroy = false
-#   }
+  name              = "/aws/eks/${var.cluster_name}/cluster"
+  retention_in_days = var.eks_log_retention_days
 
-#   tags = {
-#     Name = "${var.cluster_name}-cluster"
-#   }
-# }
+  lifecycle {
+    prevent_destroy = false
+  }
+
+  tags = {
+    Name = "${var.cluster_name}-cluster"
+  }
+}
+
+##############################
+# CloudWatch Log Groups for EKS Logs
+##############################
 
 resource "aws_cloudwatch_log_group" "eks_logs_with_prevent_destroy" {
   count = var.eks_log_prevent_destroy ? 1 : 0

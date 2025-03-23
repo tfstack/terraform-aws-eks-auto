@@ -1,3 +1,7 @@
+##############################
+# Variables: EKS Cluster Configuration
+##############################
+
 variable "cluster_name" {
   description = "Name of the EKS cluster"
   type        = string
@@ -54,6 +58,10 @@ variable "cluster_enabled_log_types" {
   default     = []
 }
 
+##############################
+# Variables: EKS Add-ons & Fargate
+##############################
+
 variable "eks_addons" {
   description = "List of EKS add-ons to install with optional configurations"
   type = list(object({
@@ -86,7 +94,7 @@ variable "eks_addons" {
         "namespace", "label_override"
       ])) == 0
     ])
-    error_message = "Each EKS add-on object must contain only the allowed attributes: 'name', 'addon_version', 'configuration_values', 'resolve_conflicts_on_create', 'resolve_conflicts_on_update', 'tags', 'preserve', 'fargate_required', 'namespace', 'label_override'."
+    error_message = "Each EKS add-on object must contain only the allowed attributes."
   }
 
   validation {
@@ -111,17 +119,25 @@ variable "fargate_profiles" {
     default = {
       enabled   = true
       namespace = "default"
-    }
+    },
     logging = {
       enabled   = false
       namespace = "logging"
-    }
+    },
     monitoring = {
       enabled   = false
       namespace = "monitoring"
     }
+    kube_system = {
+      enabled   = false
+      namespace = "kube_system"
+    }
   }
 }
+
+##############################
+# Variables: Cluster Upgrades & Networking
+##############################
 
 variable "cluster_upgrade_policy" {
   description = "Upgrade policy for EKS cluster"
@@ -154,6 +170,10 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+##############################
+# Variables: App Workloads & Access
+##############################
 
 variable "node_pools" {
   description = "Node pools for EKS Auto Mode (valid: general-purpose, system)"
@@ -193,8 +213,17 @@ variable "apps" {
     labels           = optional(map(string), {})
     create_namespace = optional(bool, true)
     enable_logging   = optional(bool, false)
+
+    autoscaling = optional(object({
+      enabled                           = bool
+      min_replicas                      = number
+      max_replicas                      = number
+      target_cpu_utilization_percentage = number
+    }))
   }))
+  default = []
 }
+
 
 variable "enable_executor_cluster_admin" {
   description = "Whether to grant AmazonEKSClusterAdminPolicy to the IAM role running Terraform"
@@ -212,4 +241,26 @@ variable "eks_log_retention_days" {
   description = "The number of days to retain logs for the EKS in CloudWatch"
   type        = number
   default     = 30
+}
+
+##############################
+# Variables: Metrics Server
+##############################
+
+variable "metrics_server" {
+  description = "Configuration for the Kubernetes Metrics Server Helm release"
+  type = object({
+    version = string
+    resources = object({
+      cpu    = string
+      memory = string
+    })
+  })
+  default = {
+    version = "3.12.2"
+    resources = {
+      cpu    = "100m"
+      memory = "200Mi"
+    }
+  }
 }

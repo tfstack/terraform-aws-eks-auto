@@ -44,6 +44,8 @@ locals {
   name      = "cltest"
   base_name = "${local.name}-${random_string.suffix.result}"
 
+  eks_cluster_version = "1.32"
+
   tags = {
     Environment = "dev"
     Project     = "example"
@@ -85,14 +87,28 @@ module "vpc" {
 # ECS Cluster Configuration
 ############################################
 
+data "aws_eks_addon_version" "latest" {
+  addon_name         = "vpc-cni"
+  kubernetes_version = local.eks_cluster_version
+  most_recent        = true
+}
+
 module "eks_auto" {
   source = "../.."
 
-  vpc_id = module.vpc.vpc_id
+  ############################################
+  # General Config
+  ############################################
+  vpc_id                        = module.vpc.vpc_id
+  cluster_name                  = local.name
+  cluster_version               = local.eks_cluster_version
+  tags                          = local.tags
+  node_pools                    = ["general-purpose"]
+  enable_executor_cluster_admin = true
 
-  cluster_name    = local.name
-  cluster_version = "1.32"
-
+  ############################################
+  # Networking
+  ############################################
   cluster_vpc_config = {
     private_subnet_ids   = module.vpc.private_subnet_ids
     private_access_cidrs = module.vpc.private_subnet_cidrs
@@ -100,12 +116,14 @@ module "eks_auto" {
       "${data.http.my_public_ip.response_body}/32"
     ] # exercise with cautious
 
-    security_group_ids = []
-
+    security_group_ids      = []
     endpoint_private_access = true
     endpoint_public_access  = true # exercise with cautious
   }
 
+  ############################################
+  # Logging & Monitoring
+  ############################################
   cluster_enabled_log_types = [
     "api",
     "audit",
@@ -116,15 +134,21 @@ module "eks_auto" {
 
   enable_cluster_encryption     = false
   enable_elastic_load_balancing = true
+  eks_log_prevent_destroy       = false
+  eks_log_retention_days        = 1
 
-  node_pools = ["general-purpose"]
-
+  ############################################
+  # Addons
+  ############################################
   eks_addons = [
     { name = "kube-proxy", version = "v1.32.0-eksbuild.2" },
     { name = "vpc-cni", version = "v1.19.2-eksbuild.5" },
     { name = "eks-pod-identity-agent", version = "v1.3.4-eksbuild.1" }
   ]
 
+  ############################################
+  # Fargate Profiles
+  ############################################
   fargate_profiles = {
     default = {
       enabled   = true
@@ -138,22 +162,33 @@ module "eks_auto" {
       enabled   = false
       namespace = "monitoring"
     }
+    kube_system = {
+      enabled   = true
+      namespace = "kube-system"
+    }
   }
 
+  ############################################
+  # EKS View Access
+  ############################################
   # eks_view_access = {
-  # enabled = true
-  # role_names = [
-  #   "${local.base_name}-jumphost"
-  # ]
+  #   enabled = true
+  #   role_names = [
+  #     "${local.base_name}-jumphost"
+  #   ]
   # }
 
-  apps = [{
-    name             = "hello-world"
-    image            = "public.ecr.aws/nginx/nginx:latest"
-    port             = 80
-    namespace        = "default"
-    create_namespace = false
-    enable_logging   = true
+  ############################################
+  # Apps
+  ############################################
+  apps = [
+    {
+      name             = "hello-world"
+      image            = "public.ecr.aws/nginx/nginx:latest"
+      port             = 80
+      namespace        = "default"
+      create_namespace = false
+      enable_logging   = true
     },
     {
       name  = "nginx"
@@ -183,16 +218,21 @@ module "eks_auto" {
           period_seconds        = 5
         }
       }
+    },
+    {
+      name           = "webapp"
+      image          = "nginx:latest"
+      port           = 80
+      enable_logging = true
+
+      autoscaling = {
+        enabled                           = true
+        min_replicas                      = 2
+        max_replicas                      = 5
+        target_cpu_utilization_percentage = 60
+      }
     }
-
   ]
-
-  enable_executor_cluster_admin = true
-
-  eks_log_prevent_destroy = false
-  eks_log_retention_days  = 1
-
-  tags = local.tags
 }
 
 output "all_module_outputs" {

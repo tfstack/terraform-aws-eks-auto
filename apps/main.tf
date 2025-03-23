@@ -1,3 +1,7 @@
+##############################
+# Kubernetes Namespace for Apps
+##############################
+
 resource "kubernetes_namespace" "this" {
   for_each = {
     for app in var.apps :
@@ -9,18 +13,15 @@ resource "kubernetes_namespace" "this" {
   metadata {
     name = each.key
 
-    annotations = merge(
-      {
-        "eks.amazonaws.com/compute-type" = "fargate"
-      },
-      lookup(each.value, "enable_logging", false) ? {
-        "eks.amazonaws.com/enable-logging" = "true"
-        } : {
-        "eks.amazonaws.com/enable-logging" = "false"
-      }
-    )
+    annotations = {
+      "eks.amazonaws.com/compute-type" = "fargate"
+    }
   }
 }
+
+##############################
+# Kubernetes Deployment for Apps
+##############################
 
 resource "kubernetes_deployment" "this" {
   for_each = { for app in var.apps : app.name => app }
@@ -28,7 +29,10 @@ resource "kubernetes_deployment" "this" {
   metadata {
     name      = each.key
     namespace = coalesce(each.value.namespace, "default")
-    labels    = merge({ app = each.key }, each.value.labels)
+    labels = merge(
+      { app = each.key },
+      lookup(each.value, "labels", {})
+    )
   }
 
   spec {
@@ -42,17 +46,18 @@ resource "kubernetes_deployment" "this" {
 
     template {
       metadata {
-        labels = {
-          app = each.key
-        }
+        labels = merge(
+          { app = each.key },
+          lookup(each.value, "labels", {})
+        )
 
         annotations = merge(
-          {},
-          lookup(each.value, "enable_logging", false) ? {
-            "eks.amazonaws.com/enable-logging" = "true"
-            } : {
-            "eks.amazonaws.com/enable-logging" = "false"
-          }
+          {
+            "eks.amazonaws.com/enable-logging" = each.value.enable_logging ? "true" : "false"
+          },
+          each.value.enable_logging ? {
+            "fluentbit.io/tag" = "logging-enabled.${each.key}"
+          } : {}
         )
       }
 
@@ -92,8 +97,43 @@ resource "kubernetes_deployment" "this" {
       }
     }
   }
+}
 
-  depends_on = [
-    kubernetes_namespace.this
-  ]
+##############################
+# Kubernetes HPA for Apps
+##############################
+
+resource "kubernetes_horizontal_pod_autoscaler_v2" "this" {
+  for_each = {
+    for app in var.apps : app.name => app
+    if try(app.autoscaling.enabled, false)
+  }
+
+  metadata {
+    name      = each.key
+    namespace = coalesce(each.value.namespace, "default")
+  }
+
+  spec {
+    scale_target_ref {
+      api_version = "apps/v1"
+      kind        = "Deployment"
+      name        = each.key
+    }
+
+    min_replicas = each.value.autoscaling.min_replicas
+    max_replicas = each.value.autoscaling.max_replicas
+
+    metric {
+      type = "Resource"
+
+      resource {
+        name = "cpu"
+        target {
+          type                = "Utilization"
+          average_utilization = each.value.autoscaling.target_cpu_utilization_percentage
+        }
+      }
+    }
+  }
 }

@@ -257,11 +257,12 @@ resource "aws_iam_policy" "eks_describe_cluster" {
   })
 }
 
-resource "aws_iam_role_policy_attachment" "readonly_describe_cluster" {
-  count = var.eks_view_access.enabled ? length(var.eks_view_access.role_names) : 0
+resource "aws_iam_policy_attachment" "readonly_describe_cluster" {
+  count = var.eks_view_access.enabled ? 1 : 0
 
-  role       = data.aws_iam_role.readonly_roles[count.index].name
+  name       = "readonly-describe-cluster"
   policy_arn = aws_iam_policy.eks_describe_cluster[0].arn
+  roles      = [for role in data.aws_iam_role.readonly_roles : role.name]
 }
 
 data "aws_iam_role" "terraform_executor" {
@@ -277,6 +278,10 @@ resource "aws_eks_access_entry" "terraform_executor" {
 
   cluster_name  = var.cluster_name
   principal_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/${local.executor_role_name}"
+
+  depends_on = [
+    aws_eks_cluster.this
+  ]
 }
 
 resource "aws_eks_access_policy_association" "terraform_executor" {

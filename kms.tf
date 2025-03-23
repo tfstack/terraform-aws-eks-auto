@@ -1,3 +1,7 @@
+##############################
+# KMS Key for EKS Cluster Encryption
+##############################
+
 resource "aws_kms_key" "eks" {
   count = var.enable_cluster_encryption ? 1 : 0
 

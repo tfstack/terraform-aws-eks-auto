@@ -74,10 +74,10 @@ resource "aws_eks_cluster" "this" {
   }
 
   depends_on = [
-    aws_iam_role_policy_attachment.eks_cluster
-    # aws_cloudwatch_log_group.eks_cluster_with_prevent_destroy
-    # aws_cloudwatch_log_group.eks_cluster_without_prevent_destroy
-    # aws_cloudwatch_log_group.eks_logs_with_prevent_destroy
-    # aws_cloudwatch_log_group.eks_logs_without_prevent_destroy
+    aws_iam_role_policy_attachment.eks_cluster,
+    aws_cloudwatch_log_group.eks_cluster_with_prevent_destroy,
+    aws_cloudwatch_log_group.eks_cluster_without_prevent_destroy,
+    aws_cloudwatch_log_group.eks_logs_with_prevent_destroy,
+    aws_cloudwatch_log_group.eks_logs_without_prevent_destroy
   ]
 }
