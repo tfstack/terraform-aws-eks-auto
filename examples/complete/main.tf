@@ -91,7 +91,7 @@ module "eks_auto" {
   ############################################
   # General Config
   ############################################
-  #   vpc_id                        = module.vpc.vpc_id
+  vpc_id          = module.vpc.vpc_id
   cluster_name    = local.name
   cluster_version = "latest"
 
@@ -100,20 +100,20 @@ module "eks_auto" {
   #   node_pools                    = ["general-purpose"]
   #   enable_executor_cluster_admin = true
 
-  #   ############################################
-  #   # Networking
-  #   ############################################
-  #   cluster_vpc_config = {
-  #     private_subnet_ids   = module.vpc.private_subnet_ids
-  #     private_access_cidrs = module.vpc.private_subnet_cidrs
-  #     public_access_cidrs = [
-  #       "${data.http.my_public_ip.response_body}/32"
-  #     ] # exercise with cautious
+  ############################################
+  # Networking
+  ############################################
+  cluster_vpc_config = {
+    private_subnet_ids   = module.vpc.private_subnet_ids
+    private_access_cidrs = module.vpc.private_subnet_cidrs
+    public_access_cidrs = [
+      "${data.http.my_public_ip.response_body}/32"
+    ] # exercise with cautious
 
-  #     security_group_ids      = []
-  #     endpoint_private_access = true
-  #     endpoint_public_access  = true # exercise with cautious
-  #   }
+    security_group_ids      = []
+    endpoint_private_access = true
+    endpoint_public_access  = true # exercise with cautious
+  }
 
   #   ############################################
   #   # Logging & Monitoring
