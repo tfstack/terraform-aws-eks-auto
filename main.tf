@@ -36,17 +36,17 @@ module "eks" {
   ]
 }
 
-# module "fargate_profiles" {
-#   source = "./modules/fargate_profiles"
+module "fargate_profiles" {
+  source = "./modules/fargate_profiles"
 
-#   cluster_name         = module.eks.cluster_name
-#   enable_monitoring    = var.fargate_profiles["monitoring"].enabled
-#   enable_kube_system   = var.fargate_profiles["kube_system"].enabled
-#   enable_logging       = var.fargate_profiles["logging"].enabled
-#   profiles_name        = [for addon in var.eks_addons : addon.name]
-#   eks_fargate_role_arn = module.iam.eks_fargate_role_arn
-#   subnet_ids           = var.cluster_vpc_config.private_subnet_ids
-# }
+  cluster_name         = module.eks.cluster_name
+  enable_monitoring    = var.fargate_profiles["monitoring"].enabled
+  enable_kube_system   = var.fargate_profiles["kube_system"].enabled
+  enable_logging       = var.fargate_profiles["logging"].enabled
+  profiles_name        = [for addon in var.eks_addons : addon.name]
+  eks_fargate_role_arn = module.iam.eks_fargate_role_arn
+  subnet_ids           = var.cluster_vpc_config.private_subnet_ids
+}
 
 # module "addons" {
 #   source = "./modules/addons"

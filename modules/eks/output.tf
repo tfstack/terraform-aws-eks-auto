@@ -1,4 +1,9 @@
+output "cluster_name" {
+  description = "The name of the EKS cluster"
+  value       = aws_eks_cluster.this.name
+}
+
 output "cluster_version" {
   description = "The Kubernetes version used for the EKS cluster"
-  value       = local.resolved_eks_version != null ? local.resolved_eks_version : "latest (managed by EKS)"
+  value       = aws_eks_cluster.this.version
 }

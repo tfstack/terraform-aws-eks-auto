@@ -12,62 +12,14 @@
 
 
 
-variable "fargate_profiles" {
-  description = "Fargate profiles for EKS Auto Mode"
-  type = map(object({
-    enabled   = bool
-    namespace = string
-    labels    = optional(map(string), {})
-  }))
-  default = {
-    default = {
-      enabled   = true
-      namespace = "default"
-    },
-    logging = {
-      enabled   = false
-      namespace = "logging"
-    },
-    monitoring = {
-      enabled   = false
-      namespace = "monitoring"
-    }
-    kube_system = {
-      enabled   = false
-      namespace = "kube_system"
-    }
-  }
-}
 
 ##############################
 # Variables: Cluster Upgrades & Networking
 ##############################
 
-variable "cluster_upgrade_policy" {
-  description = "Upgrade policy for EKS cluster"
-  type = object({
-    support_type = optional(string, null)
-  })
-  default = {}
-}
 
-variable "cluster_zonal_shift_config" {
-  description = "Zonal shift configuration"
-  type = object({
-    enabled = optional(bool, false)
-  })
-  default = {}
-}
 
-variable "timeouts" {
-  description = "Timeouts for EKS cluster creation, update, and deletion"
-  type = object({
-    create = optional(string, null)
-    update = optional(string, null)
-    delete = optional(string, null)
-  })
-  default = {}
-}
+
 
 
 ##############################

@@ -115,66 +115,66 @@ module "eks_auto" {
     endpoint_public_access  = true # exercise with cautious
   }
 
-  #   ############################################
-  #   # Logging & Monitoring
-  #   ############################################
-  #   cluster_enabled_log_types = [
-  #     "api",
-  #     "audit",
-  #     "authenticator",
-  #     "controllerManager",
-  #     "scheduler"
-  #   ]
+  ############################################
+  # Logging & Monitoring
+  ############################################
+  cluster_enabled_log_types = [
+    "api",
+    "audit",
+    "authenticator",
+    "controllerManager",
+    "scheduler"
+  ]
 
-  #   enable_cluster_encryption     = false
-  #   enable_elastic_load_balancing = true
-  #   eks_log_prevent_destroy       = false
-  #   eks_log_retention_days        = 1
+  enable_cluster_encryption     = false
+  enable_elastic_load_balancing = true
+  eks_log_prevent_destroy       = false
+  eks_log_retention_days        = 1
 
-  #   ############################################
-  #   # Addons
-  #   ############################################
-  #   eks_addons = [
-  #     {
-  #       name    = "kube-proxy",
-  #       version = data.aws_eks_addon_version.kube_proxy_latest.version
-  #     },
-  #     { name    = "vpc-cni",
-  #       version = data.aws_eks_addon_version.vpc_cni_latest.version
-  #     },
-  #     {
-  #       name    = "eks-pod-identity-agent",
-  #       version = data.aws_eks_addon_version.eks_pod_identity_agent_latest.version
-  #     },
-  #     # {
-  #     #   name                        = "metrics-server",
-  #     #   resolve_conflicts_on_create = "OVERWRITE",
-  #     #   resolve_conflicts_on_update = "OVERWRITE",
-  #     #   version                     = data.aws_eks_addon_version.metrics_server_latest.version
-  #     # }
-  #   ]
+  ############################################
+  # Addons
+  ############################################
+  eks_addons = [
+    {
+      name    = "kube-proxy",
+      version = "latest"
+    },
+    { name    = "vpc-cni",
+      version = "latest"
+    },
+    {
+      name    = "eks-pod-identity-agent",
+      version = "latest"
+    },
+    # {
+    #   name                        = "metrics-server",
+    #   resolve_conflicts_on_create = "OVERWRITE",
+    #   resolve_conflicts_on_update = "OVERWRITE",
+    #   version                     = data.aws_eks_addon_version.metrics_server_latest.version
+    # }
+  ]
 
-  #   ############################################
-  #   # Fargate Profiles
-  #   ############################################
-  #   fargate_profiles = {
-  #     default = {
-  #       enabled   = true
-  #       namespace = "default"
-  #     }
-  #     logging = {
-  #       enabled   = true
-  #       namespace = "logging"
-  #     }
-  #     monitoring = {
-  #       enabled   = false
-  #       namespace = "monitoring"
-  #     }
-  #     kube_system = {
-  #       enabled   = true
-  #       namespace = "kube-system"
-  #     }
-  #   }
+  ############################################
+  # Fargate Profiles
+  ############################################
+  fargate_profiles = {
+    default = {
+      enabled   = true
+      namespace = "default"
+    }
+    logging = {
+      enabled   = true
+      namespace = "logging"
+    }
+    monitoring = {
+      enabled   = false
+      namespace = "monitoring"
+    }
+    kube_system = {
+      enabled   = true
+      namespace = "kube-system"
+    }
+  }
 
   #   ############################################
   #   # EKS View Access

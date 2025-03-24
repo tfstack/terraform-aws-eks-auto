@@ -96,6 +96,31 @@ variable "cluster_vpc_config" {
   })
 }
 
+variable "cluster_upgrade_policy" {
+  description = "Upgrade policy for EKS cluster"
+  type = object({
+    support_type = optional(string, null)
+  })
+  default = {}
+}
+
+variable "cluster_zonal_shift_config" {
+  description = "Zonal shift configuration"
+  type = object({
+    enabled = optional(bool, false)
+  })
+  default = {}
+}
+
+variable "timeouts" {
+  description = "Timeouts for EKS cluster creation, update, and deletion"
+  type = object({
+    create = optional(string, null)
+    update = optional(string, null)
+    delete = optional(string, null)
+  })
+  default = {}
+}
 
 # variable "eks_view_access" {
 #   description = "Configuration for assigning view access to EKS cluster"
