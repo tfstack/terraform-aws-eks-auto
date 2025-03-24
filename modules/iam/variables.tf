@@ -12,3 +12,9 @@ variable "enable_cloudwatch_logging" {
   type        = bool
   default     = false
 }
+
+variable "enable_executor_cluster_admin" {
+  description = "Whether to grant AmazonEKSClusterAdminPolicy to the IAM role running Terraform"
+  type        = bool
+  default     = false
+}

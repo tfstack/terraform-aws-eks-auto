@@ -1,24 +1,11 @@
 ##############################
-# Kubernetes Namespace: AWS Observability
-##############################
-
-resource "kubernetes_namespace" "aws_observability" {
-  metadata {
-    name = "aws-observability"
-    labels = {
-      "aws-observability" = "enabled"
-    }
-  }
-}
-
-##############################
 # ConfigMap: Fluent Bit Logging Configuration
 ##############################
 
 resource "kubernetes_config_map" "aws_logging" {
   metadata {
     name      = "aws-logging"
-    namespace = kubernetes_namespace.aws_observability.metadata[0].name
+    namespace = var.aws_observability_namespace
   }
 
   data = {

@@ -2,7 +2,7 @@
 resource "aws_eks_cluster" "this" {
   name                      = var.cluster_name
   role_arn                  = var.eks_fargate_role_arn
-  version                   = var.cluster_version
+  version                   = local.resolved_cluster_version
   enabled_cluster_log_types = var.cluster_enabled_log_types
 
   bootstrap_self_managed_addons = false # REQUIRED when EKS Auto Mode is enabled
@@ -69,4 +69,8 @@ resource "aws_eks_cluster" "this" {
     update = try(var.timeouts.update, null)
     delete = try(var.timeouts.delete, null)
   }
+}
+
+data "aws_eks_cluster_auth" "this" {
+  name = aws_eks_cluster.this.name
 }

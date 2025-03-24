@@ -166,55 +166,36 @@ variable "timeouts" {
 }
 
 variable "fargate_profiles" {
-  description = "Fargate profiles for EKS Auto Mode"
-  type = map(object({
-    enabled   = bool
+  description = "List of Fargate profiles to create"
+  type = list(object({
+    name      = string
     namespace = string
     labels    = optional(map(string), {})
   }))
+}
+
+variable "eks_view_access" {
+  description = "Configuration for assigning view access to EKS cluster"
+  type = object({
+    enabled    = bool
+    role_names = list(string)
+  })
   default = {
-    default = {
-      enabled   = true
-      namespace = "default"
-    },
-    logging = {
-      enabled   = false
-      namespace = "logging"
-    },
-    monitoring = {
-      enabled   = false
-      namespace = "monitoring"
-    }
-    kube_system = {
-      enabled   = false
-      namespace = "kube_system"
-    }
+    enabled    = false
+    role_names = []
+  }
+
+  validation {
+    condition     = alltrue([for name in var.eks_view_access.role_names : can(regex("^[a-zA-Z0-9+=,.@_-]{1,128}$", name))])
+    error_message = "Each role name must be a valid IAM role name (1-128 characters, matching IAM naming rules)."
   }
 }
 
-# variable "eks_view_access" {
-#   description = "Configuration for assigning view access to EKS cluster"
-#   type = object({
-#     enabled    = bool
-#     role_names = list(string)
-#   })
-#   default = {
-#     enabled    = false
-#     role_names = []
-#   }
-
-#   validation {
-#     condition     = alltrue([for name in var.eks_view_access.role_names : can(regex("^[a-zA-Z0-9+=,.@_-]{1,128}$", name))])
-#     error_message = "Each role name must be a valid IAM role name (1-128 characters, matching IAM naming rules)."
-#   }
-# }
-
-# variable "enable_executor_cluster_admin" {
-#   description = "Whether to grant AmazonEKSClusterAdminPolicy to the IAM role running Terraform"
-#   type        = bool
-#   default     = false
-# }
-
+variable "enable_executor_cluster_admin" {
+  description = "Whether to grant AmazonEKSClusterAdminPolicy to the IAM role running Terraform"
+  type        = bool
+  default     = false
+}
 
 variable "eks_log_prevent_destroy" {
   description = "Whether to prevent the destruction of the CloudWatch log group"

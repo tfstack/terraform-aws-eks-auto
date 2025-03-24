@@ -1,7 +1,7 @@
 resource "aws_eks_addon" "this" {
   for_each = { for addon in var.eks_addons : addon.name => addon }
 
-  cluster_name                = aws_eks_cluster.this.name
+  cluster_name                = var.cluster_name
   addon_name                  = each.value.name
   addon_version               = each.value.addon_version
   configuration_values        = each.value.configuration_values
@@ -9,13 +9,4 @@ resource "aws_eks_addon" "this" {
   resolve_conflicts_on_update = each.value.resolve_conflicts_on_update
   tags                        = each.value.tags
   preserve                    = each.value.preserve
-
-  depends_on = [
-    aws_eks_cluster.this,
-    aws_eks_fargate_profile.addons,
-    aws_eks_fargate_profile.default,
-    aws_eks_fargate_profile.kube_system,
-    aws_eks_fargate_profile.logging,
-    aws_eks_fargate_profile.monitoring
-  ]
 }

@@ -3,6 +3,12 @@ variable "cluster_name" {
   type        = string
 }
 
+variable "aws_observability_namespace" {
+  description = "Name of the namespace used for Fluent Bit/observability"
+  type        = string
+  default     = "aws-observability"
+}
+
 variable "eks_log_retention_days" {
   description = "The number of days to retain logs for the EKS in CloudWatch"
   type        = number

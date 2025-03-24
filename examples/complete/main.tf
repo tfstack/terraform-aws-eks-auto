@@ -95,10 +95,9 @@ module "eks_auto" {
   cluster_name    = local.name
   cluster_version = "latest"
 
-  #   cluster_version               = local.eks_cluster_version
-  #   tags                          = local.tags
-  #   node_pools                    = ["general-purpose"]
-  #   enable_executor_cluster_admin = true
+  tags                          = local.tags
+  cluster_node_pools            = ["general-purpose"]
+  enable_executor_cluster_admin = true
 
   ############################################
   # Networking
@@ -157,24 +156,28 @@ module "eks_auto" {
   ############################################
   # Fargate Profiles
   ############################################
-  fargate_profiles = {
-    default = {
-      enabled   = true
+
+  fargate_profiles = [
+    {
+      name      = "default"
       namespace = "default"
-    }
-    logging = {
-      enabled   = true
+    },
+    {
+      name      = "logging"
       namespace = "logging"
-    }
-    monitoring = {
-      enabled   = false
-      namespace = "monitoring"
-    }
-    kube_system = {
-      enabled   = true
+    },
+    {
+      name      = "kube-system"
       namespace = "kube-system"
+    },
+    {
+      name      = "aws-observability"
+      namespace = "aws-observability"
+      labels = {
+        "aws-observability" = "enabled"
+      }
     }
-  }
+  ]
 
   #   ############################################
   #   # EKS View Access

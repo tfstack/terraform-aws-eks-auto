@@ -31,10 +31,13 @@ variable "eks_fargate_role_arn" {
   }
 }
 
-variable "profiles_name" {
-  description = "List of EKS Fargate profile names to be created"
-  type        = list(string)
-  default     = []
+variable "fargate_profiles" {
+  description = "List of Fargate profiles to create"
+  type = list(object({
+    name      = string
+    namespace = string
+    labels    = optional(map(string), {})
+  }))
 }
 
 variable "subnet_ids" {

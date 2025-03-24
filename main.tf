@@ -1,5 +1,8 @@
 locals {
   eks_addons_map = { for addon in var.eks_addons : addon.name => addon }
+  enable_metrics_server = anytrue([
+    for app in var.apps : try(app.autoscaling.enabled, false)
+  ])
 }
 
 module "iam" {
@@ -9,6 +12,7 @@ module "iam" {
   enable_cloudwatch_logging = anytrue([
     for app in var.apps : try(app.enable_logging, false)
   ])
+  enable_executor_cluster_admin = var.enable_executor_cluster_admin
 }
 
 module "logging" {
@@ -27,28 +31,73 @@ module "eks" {
   eks_fargate_role_arn    = module.iam.eks_fargate_role_arn
   eks_auto_nodes_role_arn = module.iam.eks_auto_nodes_role_arn
   cluster_vpc_config      = var.cluster_vpc_config
-  # eks_view_access               = var.eks_view_access
-  # enable_executor_cluster_admin = var.enable_executor_cluster_admin
-  vpc_id = var.vpc_id
+  vpc_id                  = var.vpc_id
 
   depends_on = [
     module.logging
   ]
 }
 
+module "namespaces" {
+  source     = "./modules/namespaces"
+  namespaces = distinct([for profile in var.fargate_profiles : profile.namespace])
+}
+
 module "fargate_profiles" {
   source = "./modules/fargate_profiles"
 
   cluster_name         = module.eks.cluster_name
-  enable_monitoring    = var.fargate_profiles["monitoring"].enabled
-  enable_kube_system   = var.fargate_profiles["kube_system"].enabled
-  enable_logging       = var.fargate_profiles["logging"].enabled
-  profiles_name        = [for addon in var.eks_addons : addon.name]
+  fargate_profiles     = var.fargate_profiles
   eks_fargate_role_arn = module.iam.eks_fargate_role_arn
   subnet_ids           = var.cluster_vpc_config.private_subnet_ids
+
+  depends_on = [
+    module.namespaces
+  ]
 }
 
-# module "addons" {
+module "executor" {
+  source = "./modules/executor"
+
+  cluster_name                  = module.eks.cluster_name
+  enable_executor_cluster_admin = var.enable_executor_cluster_admin
+}
+
+module "observability" {
+  source = "./modules/observability"
+
+  cluster_name                = module.eks.cluster_name
+  aws_observability_namespace = "aws-observability"
+
+  depends_on = [
+    module.executor
+  ]
+}
+
+module "metrics" {
+  source = "./modules/metrics"
+
+  depends_on = [
+    module.eks
+  ]
+}
+
+
+# handle delete
+# module.eks_auto.module.namespaces.kubernetes_namespace.this["aws-observability"]: Destroying... [id=aws-observability]
+# module.eks_auto.module.namespaces.kubernetes_namespace.this["logging"]: Destroying... [id=logging]
+# ╷
+# │ Error: Unauthorized
+# │
+# │
+# ╵
+# ╷
+# │ Error: Unauthorized
+
+
+
+
+# # module "addons" {
 #   source = "./modules/addons"
 
 #   cluster_name = module.eks.cluster_name
