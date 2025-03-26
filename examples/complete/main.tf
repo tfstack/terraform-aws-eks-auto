@@ -31,6 +31,7 @@ resource "random_string" "suffix" {
 
 data "aws_region" "current" {}
 data "aws_availability_zones" "available" {}
+data "aws_caller_identity" "current" {}
 
 data "http" "my_public_ip" {
   url = "http://ifconfig.me/ip"
@@ -125,31 +126,38 @@ module "eks_auto" {
     "scheduler"
   ]
 
-  enable_cluster_encryption     = false
-  enable_elastic_load_balancing = true
-  eks_log_prevent_destroy       = false
-  eks_log_retention_days        = 1
+  enable_cluster_encryption      = false
+  enable_elastic_load_balancing  = true
+  enable_irsa                    = true
+  enable_metrics_server_irsa     = true
+  metrics_server_namespace       = "kube-system"
+  metrics_server_service_account = "metrics-server"
+  eks_log_prevent_destroy        = false
+  eks_log_retention_days         = 1
 
   ############################################
   # Addons
   ############################################
   eks_addons = [
     {
-      name    = "kube-proxy",
-      version = "latest"
+      name      = "kube-proxy",
+      version   = "latest",
+      namespace = "kube-system"
     },
-    { name    = "vpc-cni",
-      version = "latest"
+    { name      = "vpc-cni",
+      version   = "latest",
+      namespace = "kube-system"
     },
     {
-      name    = "eks-pod-identity-agent",
-      version = "latest"
+      name      = "eks-pod-identity-agent",
+      version   = "latest",
+      namespace = "pod-identity"
     },
     # {
     #   name                        = "metrics-server",
     #   resolve_conflicts_on_create = "OVERWRITE",
     #   resolve_conflicts_on_update = "OVERWRITE",
-    #   version                     = data.aws_eks_addon_version.metrics_server_latest.version
+    #   version                     = "latest"
     # }
   ]
 
@@ -169,6 +177,10 @@ module "eks_auto" {
     {
       name      = "kube-system"
       namespace = "kube-system"
+    },
+    {
+      name      = "pod-identity-agent"
+      namespace = "pod-identity"
     },
     {
       name      = "aws-observability"
@@ -254,6 +266,41 @@ module "eks_auto" {
           period_seconds        = 10
         }
       }
+    }
+  ]
+
+  helm_charts = [
+    {
+      name          = "metrics-server"
+      namespace     = "kube-system"
+      repository    = "https://kubernetes-sigs.github.io/metrics-server/"
+      chart         = "metrics-server"
+      chart_version = "3.11.0"
+
+      set_values = [
+        { name = "args[0]", value = "--cert-dir=/tmp" },
+        { name = "args[0]", value = "--kubelet-insecure-tls" },
+        { name = "args[1]", value = "--kubelet-preferred-address-types=InternalIP\\,Hostname" },
+        { name = "args[2]", value = "--secure-port=4443" },
+        { name = "args[4]", value = "--bind-address=0.0.0.0" },
+        { name = "containerPort", value = "4443" },
+        { name = "livenessProbe.httpGet.port", value = "4443" },
+        { name = "livenessProbe.httpGet.scheme", value = "HTTPS" },
+        { name = "readinessProbe.httpGet.port", value = "4443" },
+        { name = "readinessProbe.httpGet.scheme", value = "HTTPS" },
+        { name = "apiService.create", value = "true" },
+        { name = "apiService.insecureSkipTLSVerify", value = "true" },
+        { name = "resources.requests.cpu", value = "100m" },
+        { name = "resources.requests.memory", value = "200Mi" },
+        { name = "resources.limits.cpu", value = "200m" },
+        { name = "resources.limits.memory", value = "300Mi" },
+        { name = "serviceAccount.create", value = "true" },
+        { name = "serviceAccount.name", value = "metrics-server" },
+        {
+          name  = "serviceAccount.annotations.eks\\.amazonaws\\.com/role-arn",
+          value = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/eks-metrics-server-irsa"
+        }
+      ]
     }
   ]
 }

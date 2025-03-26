@@ -127,3 +127,9 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "enable_irsa" {
+  description = "Enable IAM Roles for Service Accounts (IRSA) support by creating the OIDC provider for the EKS cluster."
+  type        = bool
+  default     = false
+}

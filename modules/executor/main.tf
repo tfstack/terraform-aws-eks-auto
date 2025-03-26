@@ -26,3 +26,33 @@ resource "aws_eks_access_policy_association" "terraform_executor" {
     type = "cluster"
   }
 }
+
+# resource "kubernetes_config_map" "aws_auth_executor" {
+#   count = var.patch_aws_auth ? 1 : 0
+
+#   metadata {
+#     name      = "aws-auth"
+#     namespace = "kube-system"
+#   }
+
+#   data = {
+#     mapRoles = yamlencode([
+#       {
+#         rolearn  = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/${local.executor_role_name}"
+#         username = "terraform"
+#         groups   = ["system:masters"]
+#       }
+#     ])
+#   }
+
+#   lifecycle {
+#     ignore_changes = [data] # Avoid drift if other tools modify it
+#   }
+
+#   depends_on = [aws_eks_access_entry.terraform_executor]
+# }
+# variable "patch_aws_auth" {
+#   description = "Whether to also patch aws-auth for compatibility with the Kubernetes provider"
+#   type        = bool
+#   default     = true
+# }

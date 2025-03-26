@@ -23,3 +23,12 @@ output "eks_cluster_auth_token" {
   value       = data.aws_eks_cluster_auth.this.token
   sensitive   = true
 }
+
+
+output "oidc_provider_arn" {
+  value = try(aws_iam_openid_connect_provider.this[0].arn, null)
+}
+
+output "oidc_provider_url" {
+  value = try(aws_iam_openid_connect_provider.this[0].url, null)
+}

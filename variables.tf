@@ -17,7 +17,7 @@ variable "eks_addons" {
   description = "List of EKS add-ons to install with optional configurations"
   type = list(object({
     name                        = string
-    addon_version               = optional(string, null)
+    version                     = optional(string, null)
     configuration_values        = optional(string, null)
     resolve_conflicts_on_create = optional(string, "NONE")
     resolve_conflicts_on_update = optional(string, "NONE")
@@ -27,20 +27,22 @@ variable "eks_addons" {
     namespace                   = optional(string, "kube-system")
     label_override              = optional(string, null)
   }))
-  default = [
-    { name = "kube-proxy", addon_version = "v1.32.0-eksbuild.2" },
-    { name = "vpc-cni", addon_version = "v1.19.2-eksbuild.5" }
-  ]
+  default = []
 
   validation {
-    condition     = length(var.eks_addons) > 0
-    error_message = "At least one EKS add-on must be specified."
+    condition = alltrue([
+      for addon in var.eks_addons :
+      (
+        addon.fargate_required != true || !can(regex("^eks-", addon.name))
+      )
+    ])
+    error_message = "Fargate profile names must not start with the reserved 'eks-' prefix. Use a custom name when 'fargate_required' is true."
   }
 
   validation {
     condition = alltrue([
       for addon in var.eks_addons : length(setsubtract(keys(addon), [
-        "name", "addon_version", "configuration_values", "resolve_conflicts_on_create",
+        "name", "version", "configuration_values", "resolve_conflicts_on_create",
         "resolve_conflicts_on_update", "tags", "preserve", "fargate_required",
         "namespace", "label_override"
       ])) == 0
@@ -58,6 +60,7 @@ variable "eks_addons" {
     error_message = "Valid values for 'resolve_conflicts_on_update' are 'NONE', 'OVERWRITE', and 'PRESERVE'."
   }
 }
+
 
 variable "apps" {
   description = "List of Kubernetes apps"
@@ -213,4 +216,47 @@ variable "tags" {
   description = "A map of tags to use on all resources"
   type        = map(string)
   default     = {}
+}
+
+variable "helm_charts" {
+  description = "List of Helm releases to deploy"
+  type = list(object({
+    name                 = string
+    namespace            = string
+    repository           = string
+    chart                = string
+    chart_version        = optional(string)
+    values_files         = optional(list(string), [])
+    set_values           = optional(list(object({ name = string, value = string })), [])
+    set_sensitive_values = optional(list(object({ name = string, value = string })), [])
+    create_namespace     = optional(bool, true)
+    enabled              = optional(bool, true)
+    depends_on           = optional(list(any), [])
+  }))
+
+  default = []
+}
+
+variable "enable_irsa" {
+  description = "Enable IAM Roles for Service Accounts (IRSA) support by creating the OIDC provider for the EKS cluster."
+  type        = bool
+  default     = false
+}
+
+variable "enable_metrics_server_irsa" {
+  description = "Enable creation of IRSA IAM role for metrics-server. If true, requires OIDC provider ARN and URL."
+  type        = bool
+  default     = false
+}
+
+variable "metrics_server_namespace" {
+  description = "Kubernetes namespace where the metrics-server service account will run. Defaults to 'kube-system'."
+  type        = string
+  default     = "kube-system"
+}
+
+variable "metrics_server_service_account" {
+  description = "Name of the Kubernetes service account for metrics-server used in IRSA binding."
+  type        = string
+  default     = "metrics-server"
 }
