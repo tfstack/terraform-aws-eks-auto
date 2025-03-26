@@ -73,9 +73,7 @@ module "namespaces" {
   source     = "./modules/namespaces"
   namespaces = distinct([for profile in var.fargate_profiles : profile.namespace])
 
-  depends_on = [
-    module.executor
-  ]
+  executor_dependency = module.executor.executor_access_entry_principal_arn # dummy input
 }
 
 module "observability" {
@@ -84,9 +82,7 @@ module "observability" {
   cluster_name                = module.eks.cluster_name
   aws_observability_namespace = "aws-observability"
 
-  depends_on = [
-    module.executor
-  ]
+  executor_dependency = module.executor.executor_access_entry_principal_arn # dummy input
 }
 
 module "metrics" {
@@ -109,7 +105,6 @@ module "addons" {
     module.namespaces
   ]
 }
-
 
 module "helm_releases" {
   source = "./modules/helm_releases"

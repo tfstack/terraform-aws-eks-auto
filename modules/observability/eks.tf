@@ -47,4 +47,8 @@ resource "kubernetes_config_map" "aws_logging" {
           Time_Format %Y-%m-%dT%H:%M:%S.%L%z
     EOT
   }
+
+  depends_on = [
+    var.executor_dependency
+  ]
 }
