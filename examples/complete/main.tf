@@ -97,7 +97,7 @@ module "eks_auto" {
   cluster_version = "latest"
 
   tags                          = local.tags
-  cluster_node_pools            = ["general-purpose"]
+  cluster_node_pools            = ["general-purpose", "system"]
   enable_executor_cluster_admin = true
 
   ############################################
@@ -130,15 +130,33 @@ module "eks_auto" {
   enable_elastic_load_balancing  = true
   enable_irsa                    = true
   enable_metrics_server_irsa     = true
+  enable_container_insights      = true
   metrics_server_namespace       = "kube-system"
   metrics_server_service_account = "metrics-server"
   eks_log_prevent_destroy        = false
   eks_log_retention_days         = 1
 
   ############################################
+  # Namespaces
+  ############################################
+
+  namespaces = [
+    "default",
+    "logging",
+    "kube-system",
+    "pod-identity",
+    "amazon-cloudwatch"
+  ]
+
+  ############################################
   # Addons
   ############################################
   eks_addons = [
+    {
+      name      = "coredns"
+      version   = "latest"
+      namespace = "kube-system"
+    },
     {
       name      = "kube-proxy",
       version   = "latest",
@@ -152,42 +170,6 @@ module "eks_auto" {
       name      = "eks-pod-identity-agent",
       version   = "latest",
       namespace = "pod-identity"
-    },
-    # {
-    #   name                        = "metrics-server",
-    #   resolve_conflicts_on_create = "OVERWRITE",
-    #   resolve_conflicts_on_update = "OVERWRITE",
-    #   version                     = "latest"
-    # }
-  ]
-
-  ############################################
-  # Fargate Profiles
-  ############################################
-
-  fargate_profiles = [
-    {
-      name      = "default"
-      namespace = "default"
-    },
-    {
-      name      = "logging"
-      namespace = "logging"
-    },
-    {
-      name      = "kube-system"
-      namespace = "kube-system"
-    },
-    {
-      name      = "pod-identity-agent"
-      namespace = "pod-identity"
-    },
-    {
-      name      = "aws-observability"
-      namespace = "aws-observability"
-      labels = {
-        "aws-observability" = "enabled"
-      }
     }
   ]
 
@@ -269,40 +251,31 @@ module "eks_auto" {
     }
   ]
 
-  helm_charts = [
-    {
-      name          = "metrics-server"
-      namespace     = "kube-system"
-      repository    = "https://kubernetes-sigs.github.io/metrics-server/"
-      chart         = "metrics-server"
-      chart_version = "3.11.0"
+  # helm_charts = [
+  #   {
+  #     name          = "metrics-server"
+  #     namespace     = "kube-system"
+  #     repository    = "https://kubernetes-sigs.github.io/metrics-server/"
+  #     chart         = "metrics-server"
+  #     chart_version = "3.11.0"
 
-      set_values = [
-        { name = "args[0]", value = "--cert-dir=/tmp" },
-        { name = "args[0]", value = "--kubelet-insecure-tls" },
-        { name = "args[1]", value = "--kubelet-preferred-address-types=InternalIP\\,Hostname" },
-        { name = "args[2]", value = "--secure-port=4443" },
-        { name = "args[4]", value = "--bind-address=0.0.0.0" },
-        { name = "containerPort", value = "4443" },
-        { name = "livenessProbe.httpGet.port", value = "4443" },
-        { name = "livenessProbe.httpGet.scheme", value = "HTTPS" },
-        { name = "readinessProbe.httpGet.port", value = "4443" },
-        { name = "readinessProbe.httpGet.scheme", value = "HTTPS" },
-        { name = "apiService.create", value = "true" },
-        { name = "apiService.insecureSkipTLSVerify", value = "true" },
-        { name = "resources.requests.cpu", value = "100m" },
-        { name = "resources.requests.memory", value = "200Mi" },
-        { name = "resources.limits.cpu", value = "200m" },
-        { name = "resources.limits.memory", value = "300Mi" },
-        { name = "serviceAccount.create", value = "true" },
-        { name = "serviceAccount.name", value = "metrics-server" },
-        {
-          name  = "serviceAccount.annotations.eks\\.amazonaws\\.com/role-arn",
-          value = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/eks-metrics-server-irsa"
-        }
-      ]
-    }
-  ]
+  #     set_values = [
+  #       { name = "hostNetwork", value = "false" },
+  #       { name = "apiService.create", value = "true" },
+  #       { name = "apiService.insecureSkipTLSVerify", value = "true" },
+  #       { name = "args[0]", value = "--kubelet-insecure-tls" },
+  #       { name = "args[1]", value = "--kubelet-preferred-address-types=InternalIP\\,Hostname" },
+  #       { name = "args[2]", value = "--metric-resolution=15s" },
+  #       { name = "serviceAccount.create", value = "true" },
+  #       { name = "serviceAccount.name", value = "metrics-server" },
+
+  #       {
+  #         name  = "serviceAccount.annotations.eks\\.amazonaws\\.com/role-arn",
+  #         value = "arn:aws:iam::<account_id>:role/eks-metrics-server-irsa"
+  #       }
+  #     ]
+  #   }
+  # ]
 }
 
 output "all_module_outputs" {

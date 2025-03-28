@@ -1,7 +1,7 @@
 
 resource "aws_eks_cluster" "this" {
   name                      = var.cluster_name
-  role_arn                  = var.eks_fargate_role_arn
+  role_arn                  = var.eks_auto_cluster_role_arn
   version                   = local.resolved_cluster_version
   enabled_cluster_log_types = var.cluster_enabled_log_types
 
@@ -15,7 +15,7 @@ resource "aws_eks_cluster" "this" {
   compute_config {
     enabled       = true
     node_pools    = var.cluster_node_pools
-    node_role_arn = var.eks_auto_nodes_role_arn
+    node_role_arn = var.eks_auto_node_role_arn
   }
 
   vpc_config {

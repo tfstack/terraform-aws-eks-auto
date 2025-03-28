@@ -19,12 +19,12 @@ EOF
   default     = null
 }
 
-variable "eks_fargate_role_arn" {
+variable "eks_auto_cluster_role_arn" {
   description = "Optional. Provide an existing IAM role ARN for EKS Fargate. If not set, a new role will be created."
   type        = string
 
   validation {
-    condition     = var.eks_fargate_role_arn == null || can(regex("^arn:aws:iam::[0-9]{12}:role/.+", var.eks_fargate_role_arn))
+    condition     = var.eks_auto_cluster_role_arn == null || can(regex("^arn:aws:iam::[0-9]{12}:role/.+", var.eks_auto_cluster_role_arn))
     error_message = "If provided, the value must be a valid IAM role ARN (e.g., arn:aws:iam::123456789012:role/MyFargateRole)."
   }
 }
@@ -38,7 +38,7 @@ variable "cluster_enabled_log_types" {
 variable "cluster_node_pools" {
   description = "Node pools for EKS Auto Mode (valid: general-purpose, system)"
   type        = list(string)
-  default     = ["general-purpose"]
+  default     = ["general-purpose", "system"]
 
   validation {
     condition     = alltrue([for pool in var.cluster_node_pools : contains(["general-purpose", "system"], pool)])
@@ -46,12 +46,12 @@ variable "cluster_node_pools" {
   }
 }
 
-variable "eks_auto_nodes_role_arn" {
+variable "eks_auto_node_role_arn" {
   description = "ARN of an existing IAM role for EKS worker nodes (e.g., from a node group or auto scaling group)."
   type        = string
 
   validation {
-    condition     = length(var.eks_auto_nodes_role_arn) > 0 && can(regex("^arn:aws:iam::[0-9]{12}:role/.+", var.eks_auto_nodes_role_arn))
+    condition     = length(var.eks_auto_node_role_arn) > 0 && can(regex("^arn:aws:iam::[0-9]{12}:role/.+", var.eks_auto_node_role_arn))
     error_message = "You must provide a valid, non-empty IAM role ARN (e.g., arn:aws:iam::123456789012:role/NodeInstanceRole)."
   }
 }

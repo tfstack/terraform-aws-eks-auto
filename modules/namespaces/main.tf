@@ -7,8 +7,4 @@ resource "kubernetes_namespace" "this" {
   metadata {
     name = each.value
   }
-
-  depends_on = [
-    var.executor_dependency
-  ]
 }

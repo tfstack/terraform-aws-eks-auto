@@ -26,5 +26,10 @@ provider "helm" {
     host                   = module.eks.eks_cluster_endpoint
     cluster_ca_certificate = module.eks.eks_cluster_ca_cert
     token                  = module.eks.eks_cluster_auth_token
+    # exec {
+    #   api_version = "client.authentication.k8s.io/v1beta1"
+    #   command     = "aws"
+    #   args        = ["eks", "get-token", "--cluster-name", module.eks.cluster_name]
+    # }
   }
 }

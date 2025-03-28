@@ -1,11 +1,12 @@
-output "eks_auto_nodes_role_arn" {
-  description = "ARN of the IAM role used by EKS worker nodes (autoscaling group)"
-  value       = aws_iam_role.eks_auto_nodes.arn
+
+output "eks_auto_cluster_role_arn" {
+  description = "IAM Role ARN for the EKS Auto Mode control plane"
+  value       = aws_iam_role.eks_auto_cluster.arn
 }
 
-output "eks_fargate_role_arn" {
-  description = "ARN of the IAM Role used for EKS Fargate"
-  value       = aws_iam_role.eks_fargate.arn
+output "eks_auto_node_role_arn" {
+  description = "IAM Role ARN for EKS Auto Mode EC2 nodes"
+  value       = aws_iam_role.eks_auto_node.arn
 }
 
 output "metrics_server_irsa_role_arn" {

@@ -9,7 +9,7 @@ resource "aws_eks_fargate_profile" "this" {
 
   cluster_name           = var.cluster_name
   fargate_profile_name   = each.value.name
-  pod_execution_role_arn = var.eks_fargate_role_arn
+  pod_execution_role_arn = var.eks_cluster_role_arn
   subnet_ids             = var.subnet_ids
 
   selector {

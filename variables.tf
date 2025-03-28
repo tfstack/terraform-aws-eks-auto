@@ -168,14 +168,12 @@ variable "timeouts" {
   default = {}
 }
 
-variable "fargate_profiles" {
-  description = "List of Fargate profiles to create"
-  type = list(object({
-    name      = string
-    namespace = string
-    labels    = optional(map(string), {})
-  }))
+variable "namespaces" {
+  description = "List of Kubernetes namespaces to create"
+  type        = list(string)
+  default     = []
 }
+
 
 variable "eks_view_access" {
   description = "Configuration for assigning view access to EKS cluster"
@@ -259,4 +257,10 @@ variable "metrics_server_service_account" {
   description = "Name of the Kubernetes service account for metrics-server used in IRSA binding."
   type        = string
   default     = "metrics-server"
+}
+
+variable "enable_container_insights" {
+  description = "Enable Container Insights for the EKS cluster. If true, sets up necessary configurations and permissions."
+  type        = bool
+  default     = false
 }

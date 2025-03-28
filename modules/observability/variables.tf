@@ -14,9 +14,3 @@ variable "eks_log_retention_days" {
   type        = number
   default     = 30
 }
-
-variable "executor_dependency" {
-  description = "Dummy input to establish a dependency on the executor module"
-  type        = string
-  default     = null
-}

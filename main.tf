@@ -34,8 +34,8 @@ module "eks" {
   cluster_name                  = var.cluster_name
   cluster_version               = var.cluster_version
   tags                          = var.tags
-  eks_fargate_role_arn          = module.iam.eks_fargate_role_arn
-  eks_auto_nodes_role_arn       = module.iam.eks_auto_nodes_role_arn
+  eks_auto_cluster_role_arn     = module.iam.eks_auto_cluster_role_arn
+  eks_auto_node_role_arn        = module.iam.eks_auto_node_role_arn
   vpc_id                        = var.vpc_id
   cluster_vpc_config            = var.cluster_vpc_config
   cluster_node_pools            = var.cluster_node_pools
@@ -49,82 +49,72 @@ module "eks" {
   ]
 }
 
-module "fargate_profiles" {
-  source = "./modules/fargate_profiles"
+# module "executor" {
+#   source = "./modules/executor"
 
-  cluster_name         = module.eks.cluster_name
-  fargate_profiles     = var.fargate_profiles
-  eks_fargate_role_arn = module.iam.eks_fargate_role_arn
-  subnet_ids           = var.cluster_vpc_config.private_subnet_ids
+#   cluster_name                  = module.eks.cluster_name
+#   eks_cluster_endpoint          = module.eks.eks_cluster_endpoint
+#   enable_executor_cluster_admin = var.enable_executor_cluster_admin
+# }
 
-  depends_on = [
-    module.namespaces
-  ]
-}
+# module "namespaces" {
+#   source = "./modules/namespaces"
 
-module "executor" {
-  source = "./modules/executor"
+#   namespaces = var.namespaces
 
-  cluster_name                  = module.eks.cluster_name
-  enable_executor_cluster_admin = var.enable_executor_cluster_admin
-}
+#   depends_on = [
+#     module.executor
+#   ]
+# }
 
-module "namespaces" {
-  source     = "./modules/namespaces"
-  namespaces = distinct([for profile in var.fargate_profiles : profile.namespace])
+# # module "observability" {
+# #   source = "./modules/observability"
 
-  executor_dependency = module.executor.executor_access_entry_principal_arn # dummy input
-}
+# #   cluster_name                = module.eks.cluster_name
+# #   aws_observability_namespace = "aws-observability"
 
-module "observability" {
-  source = "./modules/observability"
+# #   depends_on = [
+# #     module.executor
+# #   ]
+# # }
 
-  cluster_name                = module.eks.cluster_name
-  aws_observability_namespace = "aws-observability"
+# # module "metrics" {
+# #   source = "./modules/metrics"
 
-  executor_dependency = module.executor.executor_access_entry_principal_arn # dummy input
-}
+# #   depends_on = [
+# #     module.eks
+# #   ]
+# # }
 
-module "metrics" {
-  source = "./modules/metrics"
+# module "container_insights" {
+#   source = "./modules/container_insights"
 
-  depends_on = [
-    module.eks
-  ]
-}
+#   cluster_name              = module.eks.cluster_name
+#   enable_container_insights = var.enable_container_insights
 
-module "addons" {
-  source = "./modules/addons"
+#   depends_on = [
+#     module.namespaces
+#   ]
+# }
 
-  cluster_name    = module.eks.cluster_name
-  cluster_version = module.eks.cluster_version
-  eks_addons      = var.eks_addons
+# module "addons" {
+#   source = "./modules/addons"
 
-  depends_on = [
-    module.fargate_profiles,
-    module.namespaces
-  ]
-}
+#   cluster_name    = module.eks.cluster_name
+#   cluster_version = module.eks.cluster_version
+#   eks_addons      = var.eks_addons
 
-module "helm_releases" {
-  source = "./modules/helm_releases"
+#   depends_on = [
+#     module.namespaces
+#   ]
+# }
 
-  helm_charts = var.helm_charts
+# module "helm_releases" {
+#   source = "./modules/helm_releases"
 
-  depends_on = [
-    module.eks,
-    module.fargate_profiles
-  ]
-}
+#   helm_charts = var.helm_charts
 
-
-# handle delete
-# module.eks_auto.module.namespaces.kubernetes_namespace.this["aws-observability"]: Destroying... [id=aws-observability]
-# module.eks_auto.module.namespaces.kubernetes_namespace.this["logging"]: Destroying... [id=logging]
-# ╷
-# │ Error: Unauthorized
-# │
-# │
-# ╵
-# ╷
-# │ Error: Unauthorized
+#   depends_on = [
+#     module.eks
+#   ]
+# }
