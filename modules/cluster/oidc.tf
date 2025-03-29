@@ -1,8 +1,16 @@
+#########################################
+# TLS Certificate for EKS OIDC (IRSA)
+#########################################
+
 data "tls_certificate" "eks_oidc" {
   count = var.enable_irsa ? 1 : 0
 
   url = aws_eks_cluster.this.identity[0].oidc[0].issuer
 }
+
+#########################################
+# IAM OpenID Connect Provider for EKS (IRSA)
+#########################################
 
 resource "aws_iam_openid_connect_provider" "this" {
   count = var.enable_irsa ? 1 : 0

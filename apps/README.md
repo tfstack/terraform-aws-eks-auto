@@ -18,8 +18,8 @@ module "apps" {
   source = "../.."
 
   cluster_name     = "example-cluster"
-  cluster_endpoint = module.eks.cluster_endpoint
-  cluster_ca       = module.eks.cluster_certificate_authority_data
+  cluster_endpoint = module.cluster.cluster_endpoint
+  cluster_ca       = module.cluster.cluster_certificate_authority_data
 
   apps = [
     {

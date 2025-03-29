@@ -71,8 +71,8 @@ module "vpc" {
   eic_ingress_cidrs = ["${data.http.my_public_ip.response_body}/32"]
 
   jumphost_subnet              = "10.0.0.0/24"
-  jumphost_allow_egress        = false
-  jumphost_instance_create     = false
+  jumphost_allow_egress        = true
+  jumphost_instance_create     = true
   jumphost_user_data_file      = "${path.module}/external/cloud-init.sh"
   jumphost_log_prevent_destroy = false
 
@@ -81,10 +81,9 @@ module "vpc" {
 
   tags = local.tags
 
-  enable_eks_tags = true
+  enable_eks_tags        = true
+  enable_s3_vpc_endpoint = true
 }
-
-
 
 module "eks_auto" {
   source = "../.."
@@ -96,9 +95,8 @@ module "eks_auto" {
   cluster_name    = local.name
   cluster_version = "latest"
 
-  tags                          = local.tags
-  cluster_node_pools            = ["general-purpose", "system"]
-  enable_executor_cluster_admin = true
+  tags               = local.tags
+  cluster_node_pools = ["general-purpose", "system"]
 
   ############################################
   # Networking
@@ -126,26 +124,28 @@ module "eks_auto" {
     "scheduler"
   ]
 
-  enable_cluster_encryption      = false
-  enable_elastic_load_balancing  = true
-  enable_irsa                    = true
-  enable_metrics_server_irsa     = true
-  enable_container_insights      = true
-  metrics_server_namespace       = "kube-system"
-  metrics_server_service_account = "metrics-server"
-  eks_log_prevent_destroy        = false
-  eks_log_retention_days         = 1
+  fluentbit_sa_namespace = "amazon-cloudwatch"
+  fluentbit_sa_name      = "fluent-bit"
+
+  enable_cluster_encryption     = false
+  enable_elastic_load_balancing = true
+  enable_irsa                   = true
+  enable_container_insights     = true
+  eks_log_prevent_destroy       = false
+  eks_log_retention_days        = 1
 
   ############################################
   # Namespaces
   ############################################
 
   namespaces = [
-    "default",
-    "logging",
-    "kube-system",
-    "pod-identity",
-    "amazon-cloudwatch"
+    "default", #  Default user namespace for workloads
+    # "logging",           #  Optional custom namespace for logging apps
+    "kube-system",     #  System namespace for core Kubernetes components
+    "kube-public",     #  Readable by all users (mostly unused)
+    "kube-node-lease", #  Used for node heartbeats (Kubelet leases)
+    # "pod-identity",      #  Optional (used for IAM roles via IRSA)
+    "amazon-cloudwatch" #  Optional (used for Container Insights, logging)
   ]
 
   ############################################
@@ -153,24 +153,24 @@ module "eks_auto" {
   ############################################
   eks_addons = [
     {
-      name      = "coredns"
+      name      = "metrics-server"
       version   = "latest"
       namespace = "kube-system"
     },
-    {
-      name      = "kube-proxy",
-      version   = "latest",
-      namespace = "kube-system"
-    },
-    { name      = "vpc-cni",
-      version   = "latest",
-      namespace = "kube-system"
-    },
-    {
-      name      = "eks-pod-identity-agent",
-      version   = "latest",
-      namespace = "pod-identity"
-    }
+    # {
+    #   name      = "coredns"
+    #   version   = "latest"
+    #   namespace = "kube-system"
+    # },
+    # {
+    #   name      = "kube-proxy",
+    #   version   = "latest",
+    #   namespace = "kube-system"
+    # },
+    # { name      = "vpc-cni",
+    #   version   = "latest",
+    #   namespace = "kube-system"
+    # },
   ]
 
   #   ############################################
@@ -188,67 +188,79 @@ module "eks_auto" {
   ############################################
   apps = [
     {
-      name             = "hello-world"
-      image            = "public.ecr.aws/nginx/nginx:latest"
-      port             = 80
-      namespace        = "default"
-      create_namespace = false
-      enable_logging   = true
-    },
-    {
-      name           = "nginx"
-      image          = "nginx:1.25"
-      port           = 8080
-      enable_logging = true
+      name           = "test"
+      image          = "nginx:1.16"
+      port           = 80
+      namespace      = "default"
+      replicas       = 3
+      enable_logging = false
 
       labels = {
-        env = "dev"
-      }
-
-      healthcheck = {
-        liveness = {
-          http_get = {
-            path = "/"
-            port = 8080
-          }
-          initial_delay_seconds = 5
-          period_seconds        = 10
-        }
-
-        readiness = {
-          http_get = {
-            path = "/"
-            port = 8080
-          }
-          initial_delay_seconds = 3
-          period_seconds        = 5
-        }
-      }
-    },
-    {
-      name           = "webapp"
-      image          = "nginx:latest"
-      port           = 80
-      enable_logging = true
-
-      autoscaling = {
-        enabled                           = true
-        min_replicas                      = 2
-        max_replicas                      = 5
-        target_cpu_utilization_percentage = 60
-      }
-
-      healthcheck = {
-        readiness = {
-          http_get = {
-            path = "/"
-            port = 80
-          }
-          initial_delay_seconds = 5
-          period_seconds        = 10
-        }
+        environment = "test"
       }
     }
+    # {
+    #   name             = "hello-world"
+    #   image            = "public.ecr.aws/nginx/nginx:latest"
+    #   port             = 80
+    #   namespace        = "default"
+    #   create_namespace = false
+    #   enable_logging   = true
+    # },
+    # {
+    #   name           = "nginx"
+    #   image          = "nginx:1.25"
+    #   port           = 8080
+    #   enable_logging = true
+
+    #   labels = {
+    #     env = "dev"
+    #   }
+
+    #   healthcheck = {
+    #     liveness = {
+    #       http_get = {
+    #         path = "/"
+    #         port = 8080
+    #       }
+    #       initial_delay_seconds = 5
+    #       period_seconds        = 10
+    #     }
+
+    #     readiness = {
+    #       http_get = {
+    #         path = "/"
+    #         port = 8080
+    #       }
+    #       initial_delay_seconds = 3
+    #       period_seconds        = 5
+    #     }
+    #   }
+    # },
+    # {
+    #   name           = "webapp"
+    #   image          = "nginx:latest"
+    #   port           = 80
+    #   enable_logging = true
+
+    #   autoscaling = {
+    #     enabled                           = true
+    #     min_replicas                      = 2
+    #     max_replicas                      = 5
+    #     target_cpu_utilization_percentage = 60
+    #   }
+
+    #   healthcheck = {
+    #     readiness = {
+    #       http_get = {
+    #         path = "/"
+    #         port = 80
+    #       }
+    #       initial_delay_seconds = 5
+    #       period_seconds        = 10
+    #     }
+    #   }
+    # }
   ]
 
   # helm_charts = [

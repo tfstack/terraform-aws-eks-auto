@@ -1,3 +1,7 @@
+#########################################
+# Kubernetes Namespaces (Excluding System Namespaces)
+#########################################
+
 resource "kubernetes_namespace" "this" {
   for_each = {
     for ns in var.namespaces : ns => ns

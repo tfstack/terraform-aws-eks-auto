@@ -1,5 +1,5 @@
 ##############################
-# CloudWatch Log Groups for EKS Cluster
+# CloudWatch Log Group: EKS Cluster Logs
 ##############################
 
 resource "aws_cloudwatch_log_group" "eks_cluster_with_prevent_destroy" {
@@ -33,7 +33,7 @@ resource "aws_cloudwatch_log_group" "eks_cluster_without_prevent_destroy" {
 }
 
 ##############################
-# CloudWatch Log Groups for EKS Logs
+# CloudWatch Log Group: EKS General Logs
 ##############################
 
 resource "aws_cloudwatch_log_group" "eks_logs_with_prevent_destroy" {

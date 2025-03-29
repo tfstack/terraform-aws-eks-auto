@@ -1,12 +1,4 @@
 ##############################
-# AWS Data Sources
-##############################
-
-data "aws_region" "current" {}
-
-data "aws_caller_identity" "current" {}
-
-##############################
 # IAM Role for EKS Auto Cluster
 ##############################
 
@@ -122,7 +114,7 @@ resource "aws_iam_role_policy_attachment" "eks_auto_node" {
 # }
 
 # resource "aws_iam_role_policy" "eks_fargate_logging" {
-#   count = var.enable_cloudwatch_logging ? 1 : 0
+#   count = var.enable_container_insights ? 1 : 0
 
 #   name = "EKSFargateLogging"
 #   role = aws_iam_role.eks_fargate.name

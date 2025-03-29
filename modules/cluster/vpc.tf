@@ -1,8 +1,16 @@
+#########################################
+# Security Group for EKS Cluster
+#########################################
+
 resource "aws_security_group" "eks" {
   count = var.create_security_group ? 1 : 0
 
-  vpc_id = var.vpc_id
   name   = "${var.cluster_name}-eks"
+  vpc_id = var.vpc_id
+
+  #######################################
+  # Ingress Rules
+  #######################################
 
   ingress {
     from_port   = 443
@@ -27,6 +35,10 @@ resource "aws_security_group" "eks" {
     cidr_blocks = var.cluster_vpc_config.private_access_cidrs
     description = "Allow Kubernetes cluster networking"
   }
+
+  #######################################
+  # Egress Rules
+  #######################################
 
   egress {
     from_port   = 0

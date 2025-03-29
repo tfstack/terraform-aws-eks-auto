@@ -1,3 +1,7 @@
+#########################################
+# EKS Cluster Outputs
+#########################################
+
 output "cluster_name" {
   description = "The name of the EKS cluster"
   value       = aws_eks_cluster.this.name
@@ -24,6 +28,9 @@ output "eks_cluster_auth_token" {
   sensitive   = true
 }
 
+#########################################
+# OIDC Identity Provider (IRSA)
+#########################################
 
 output "oidc_provider_arn" {
   value = try(aws_iam_openid_connect_provider.this[0].arn, null)
@@ -31,4 +38,18 @@ output "oidc_provider_arn" {
 
 output "oidc_provider_url" {
   value = try(aws_iam_openid_connect_provider.this[0].url, null)
+}
+
+#########################################
+# EKS IAM Role ARNs (Auto Mode)
+#########################################
+
+output "eks_auto_cluster_role_arn" {
+  description = "IAM Role ARN for the EKS Auto Mode control plane"
+  value       = aws_iam_role.eks_auto_cluster.arn
+}
+
+output "eks_auto_node_role_arn" {
+  description = "IAM Role ARN for EKS Auto Mode EC2 nodes"
+  value       = aws_iam_role.eks_auto_node.arn
 }
