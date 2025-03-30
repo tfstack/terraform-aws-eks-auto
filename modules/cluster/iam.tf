@@ -64,6 +64,45 @@ resource "aws_iam_role_policy_attachment" "eks_auto_node" {
   policy_arn = each.value
 }
 
+resource "aws_iam_policy" "eks_node_ebs_support" {
+  name        = "${var.cluster_name}-eks-node-ebs-access"
+  description = "Permissions for EKS nodes to support EBS CSI driver volume attachments"
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Sid    = "EBSVolumeActions",
+        Effect = "Allow",
+        Action = [
+          "ec2:AttachVolume",
+          "ec2:DetachVolume"
+        ],
+        Resource = [
+          "arn:aws:ec2:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:volume/*",
+          "arn:aws:ec2:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:instance/*"
+        ]
+      },
+      {
+        Sid    = "DescribeAccess",
+        Effect = "Allow",
+        Action = [
+          "ec2:DescribeInstances",
+          "ec2:DescribeVolumes"
+        ],
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "eks_node_ebs_support_attach" {
+  role       = aws_iam_role.eks_auto_node.name
+  policy_arn = aws_iam_policy.eks_node_ebs_support.arn
+}
+
+
+
 # ##############################
 # # Custom Inline Policies for Fargate
 # ##############################

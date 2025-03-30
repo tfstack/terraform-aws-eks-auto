@@ -3,6 +3,8 @@
 #########################################
 
 resource "helm_release" "fluentbit" {
+  count = var.enable_container_insights ? 1 : 0
+
   name       = "fluent-bit"
   namespace  = "amazon-cloudwatch"
   repository = "https://aws.github.io/eks-charts"

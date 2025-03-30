@@ -12,7 +12,7 @@ terraform {
 }
 
 provider "aws" {
-  region = "ap-southeast-1"
+  region = "ap-southeast-2"
 }
 
 ############################################
@@ -130,7 +130,9 @@ module "eks_auto" {
   enable_cluster_encryption     = false
   enable_elastic_load_balancing = true
   enable_irsa                   = true
+  enable_ebs_csi_controller     = true
   enable_container_insights     = true
+  enable_prometheus             = true
   eks_log_prevent_destroy       = false
   eks_log_retention_days        = 1
 
@@ -145,7 +147,9 @@ module "eks_auto" {
     "kube-public",     #  Readable by all users (mostly unused)
     "kube-node-lease", #  Used for node heartbeats (Kubelet leases)
     # "pod-identity",      #  Optional (used for IAM roles via IRSA)
-    "amazon-cloudwatch" #  Optional (used for Container Insights, logging)
+    "amazon-cloudwatch", # Optional (used for Container Insights, logging)
+    "prometheus"         # Optional (used for Prometheus monitoring stack)
+
   ]
 
   ############################################

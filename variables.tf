@@ -89,7 +89,7 @@ variable "create_security_group" {
 }
 
 #########################################
-# Optional Features
+# Optional Features & IAM
 #########################################
 
 variable "enable_cluster_encryption" {
@@ -110,8 +110,8 @@ variable "enable_irsa" {
   default     = false
 }
 
-variable "enable_container_insights" {
-  description = "Whether to enable CloudWatch logging for EKS workloads (e.g., Fluent Bit, Fargate logs)"
+variable "enable_ebs_csi_controller" {
+  description = "Enable the AWS EBS CSI Controller. If true, deploys the Helm release and sets up required IAM roles and policies."
   type        = bool
   default     = false
 }
@@ -119,6 +119,12 @@ variable "enable_container_insights" {
 #########################################
 # Logging and Observability
 #########################################
+
+variable "enable_container_insights" {
+  description = "Whether to enable CloudWatch logging for EKS workloads (e.g., Fluent Bit, Fargate logs)"
+  type        = bool
+  default     = false
+}
 
 variable "eks_log_prevent_destroy" {
   description = "Whether to prevent the destruction of the CloudWatch log group"
@@ -130,6 +136,50 @@ variable "eks_log_retention_days" {
   description = "The number of days to retain logs for the EKS in CloudWatch"
   type        = number
   default     = 30
+}
+
+variable "enable_prometheus" {
+  description = "Enable Prometheus deployment to the EKS cluster"
+  type        = bool
+  default     = false
+}
+
+variable "prometheus_chart_version" {
+  description = "Helm chart version to use for Prometheus. Use \"latest\" or null to always get the latest chart version."
+  type        = string
+  default     = "latest"
+}
+
+#########################################
+# Storage - EBS CSI Driver
+#########################################
+
+variable "ebs_csi_controller_sa_name" {
+  description = "The name of the Kubernetes ServiceAccount used by the EBS CSI driver"
+  type        = string
+  default     = "ebs-csi-controller-sa"
+}
+
+variable "ebs_csi_driver_chart_version" {
+  description = "Helm chart version to use for AWS EBS CSI Driver. Use 'latest' or null to always get the latest chart version."
+  type        = string
+  default     = "latest"
+}
+
+#########################################
+# Container Insights - Fluent Bit
+#########################################
+
+variable "fluentbit_sa_namespace" {
+  description = "The Kubernetes namespace where the Fluent Bit service account is deployed. Used to define the IRSA trust relationship."
+  type        = string
+  default     = "amazon-cloudwatch"
+}
+
+variable "fluentbit_sa_name" {
+  description = "The name of the Kubernetes service account used by Fluent Bit. This is used to associate the IAM role via IRSA."
+  type        = string
+  default     = "fluent-bit"
 }
 
 #########################################
@@ -262,22 +312,6 @@ variable "apps" {
     }), null)
   }))
   default = []
-}
-
-#########################################
-# Container Insights - Fluent Bit
-#########################################
-
-variable "fluentbit_sa_namespace" {
-  description = "The Kubernetes namespace where the Fluent Bit service account is deployed. Used to define the IRSA trust relationship."
-  type        = string
-  default     = "amazon-cloudwatch"
-}
-
-variable "fluentbit_sa_name" {
-  description = "The name of the Kubernetes service account used by Fluent Bit. This is used to associate the IAM role via IRSA."
-  type        = string
-  default     = "fluent-bit"
 }
 
 #########################################

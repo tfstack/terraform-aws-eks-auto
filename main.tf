@@ -48,6 +48,27 @@ module "namespaces" {
 }
 
 #########################################
+# Module: EBS CSI Controller
+#########################################
+
+module "ebs_csi_controller" {
+  source = "./modules/ebs_csi_controller"
+
+  cluster_name                 = module.cluster.cluster_name
+  enable_ebs_csi_controller    = var.enable_ebs_csi_controller
+  ebs_csi_controller_sa_name   = var.ebs_csi_controller_sa_name
+  ebs_csi_driver_chart_version = var.ebs_csi_driver_chart_version
+  oidc_provider_arn            = module.cluster.oidc_provider_arn
+  oidc_provider_url            = module.cluster.oidc_provider_url
+
+  tags = var.tags
+
+  depends_on = [
+    module.namespaces
+  ]
+}
+
+#########################################
 # Module: Container Insights (Fluent Bit)
 #########################################
 
@@ -62,6 +83,21 @@ module "container_insights" {
   oidc_provider_url         = module.cluster.oidc_provider_url
   eks_log_prevent_destroy   = var.eks_log_prevent_destroy
   eks_log_retention_days    = var.eks_log_retention_days
+
+  depends_on = [
+    module.ebs_csi_controller
+  ]
+}
+
+#########################################
+# Module: EKS Add-ons - Prometheus
+#########################################
+
+module "prometheus" {
+  source = "./modules/prometheus"
+
+  enable_prometheus        = var.enable_prometheus
+  prometheus_chart_version = var.prometheus_chart_version
 
   depends_on = [
     module.namespaces
