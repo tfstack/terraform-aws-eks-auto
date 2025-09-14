@@ -31,7 +31,7 @@ resource "kubernetes_config_map" "aws_logging" {
       [OUTPUT]
           Name cloudwatch_logs
           Match logging-enabled.*
-          region ${data.aws_region.current.name}
+          region ${data.aws_region.current.region}
           log_group_name /aws/eks/${var.cluster_name}/logs
           log_stream_prefix from-fluent-bit-
           log_retention_days ${var.eks_log_retention_days}

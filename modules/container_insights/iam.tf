@@ -17,7 +17,7 @@ resource "aws_iam_role" "fluentbit_irsa" {
       Action = "sts:AssumeRoleWithWebIdentity",
       Condition = {
         StringEquals = {
-          "${replace(var.oidc_provider_url, "https://", "")}:sub" = "system:serviceaccount:${var.fluentbit_sa_namespace}:${var.fluentbit_sa_name}"
+          "${replace(var.oidc_provider_url, "https://", "")}:sub" = "system:serviceaccount:${var.fluentbit_namespace}:${var.fluentbit_sa_name}"
         }
       }
     }]

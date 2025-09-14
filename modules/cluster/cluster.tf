@@ -1,7 +1,7 @@
 resource "aws_eks_cluster" "this" {
   name     = var.cluster_name
   version  = local.resolved_cluster_version
-  role_arn = var.eks_auto_cluster_role_arn
+  role_arn = var.eks_auto_cluster_role_arn != null ? var.eks_auto_cluster_role_arn : aws_iam_role.eks_auto_cluster.arn
 
   #######################################
   # Logging and Monitoring
@@ -38,6 +38,8 @@ resource "aws_eks_cluster" "this" {
   }
 
   kubernetes_network_config {
+    ip_family         = "ipv4"
+    service_ipv4_cidr = var.cluster_vpc_config.service_cidr
     elastic_load_balancing {
       enabled = var.enable_elastic_load_balancing
     }
@@ -49,7 +51,7 @@ resource "aws_eks_cluster" "this" {
   compute_config {
     enabled       = true
     node_pools    = var.cluster_node_pools
-    node_role_arn = var.eks_auto_node_role_arn
+    node_role_arn = var.eks_auto_node_role_arn != null ? var.eks_auto_node_role_arn : aws_iam_role.eks_auto_node.arn
   }
 
   #######################################
@@ -91,7 +93,12 @@ resource "aws_eks_cluster" "this" {
   bootstrap_self_managed_addons = false # REQUIRED when EKS Auto Mode is enabled
 
   tags = merge(
-    { "eks.auto-mode" = "true" },
+    {
+      "eks.auto-mode"                               = "true"
+      "Name"                                        = "${var.cluster_name}-eks-auto-cluster"
+      "alpha.eksctl.io/cluster-name"                = var.cluster_name
+      "eksctl.cluster.k8s.io/v1alpha1/cluster-name" = var.cluster_name
+    },
     var.tags
   )
 

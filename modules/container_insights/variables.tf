@@ -25,10 +25,10 @@ variable "fluentbit_read_from_head" {
   default     = "Off"
 }
 
-variable "fluentbit_sa_namespace" {
-  description = "The Kubernetes namespace where the Fluent Bit service account is deployed. Used to define the IRSA trust relationship."
+variable "fluentbit_namespace" {
+  description = "The Kubernetes namespace where Fluent Bit is deployed. Use 'aws-observability' for EKS Auto Mode or 'amazon-cloudwatch' for standard EKS."
   type        = string
-  default     = "amazon-cloudwatch"
+  default     = "aws-observability"
 }
 
 variable "fluentbit_sa_name" {

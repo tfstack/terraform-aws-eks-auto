@@ -104,10 +104,10 @@ variable "enable_elastic_load_balancing" {
   default     = true
 }
 
-variable "enable_irsa" {
+variable "enable_oidc" {
   description = "Enable IAM Roles for Service Accounts (IRSA) support by creating the OIDC provider for the EKS cluster."
   type        = bool
-  default     = false
+  default     = true
 }
 
 variable "enable_ebs_csi_controller" {
@@ -170,10 +170,10 @@ variable "ebs_csi_driver_chart_version" {
 # Container Insights - Fluent Bit
 #########################################
 
-variable "fluentbit_sa_namespace" {
-  description = "The Kubernetes namespace where the Fluent Bit service account is deployed. Used to define the IRSA trust relationship."
+variable "fluentbit_namespace" {
+  description = "The Kubernetes namespace where Fluent Bit is deployed. Use 'aws-observability' for EKS Auto Mode or 'amazon-cloudwatch' for standard EKS."
   type        = string
-  default     = "amazon-cloudwatch"
+  default     = "aws-observability"
 }
 
 variable "fluentbit_sa_name" {
@@ -190,6 +190,18 @@ variable "namespaces" {
   description = "List of Kubernetes namespaces to create"
   type        = list(string)
   default     = []
+
+  validation {
+    condition = alltrue([
+      for ns in var.namespaces : !contains([
+        "default",
+        "kube-system",
+        "kube-public",
+        "kube-node-lease"
+      ], ns)
+    ])
+    error_message = "The following namespaces are managed by Kubernetes and cannot be created: default, kube-system, kube-public, kube-node-lease"
+  }
 }
 
 variable "eks_addons" {
@@ -202,28 +214,14 @@ variable "eks_addons" {
     resolve_conflicts_on_update = optional(string, "NONE")
     tags                        = optional(map(string), {})
     preserve                    = optional(bool, false)
-    fargate_required            = optional(bool, false)
-    namespace                   = optional(string, "kube-system")
-    label_override              = optional(string, null)
   }))
   default = []
 
   validation {
     condition = alltrue([
-      for addon in var.eks_addons :
-      (
-        addon.fargate_required != true || !can(regex("^eks-", addon.name))
-      )
-    ])
-    error_message = "Fargate profile names must not start with the reserved 'eks-' prefix. Use a custom name when 'fargate_required' is true."
-  }
-
-  validation {
-    condition = alltrue([
       for addon in var.eks_addons : length(setsubtract(keys(addon), [
         "name", "version", "configuration_values", "resolve_conflicts_on_create",
-        "resolve_conflicts_on_update", "tags", "preserve", "fargate_required",
-        "namespace", "label_override"
+        "resolve_conflicts_on_update", "tags", "preserve"
       ])) == 0
     ])
     error_message = "Each EKS add-on object must contain only the allowed attributes."
@@ -238,6 +236,112 @@ variable "eks_addons" {
     condition     = alltrue([for addon in var.eks_addons : addon.resolve_conflicts_on_update == "NONE" || addon.resolve_conflicts_on_update == "OVERWRITE" || addon.resolve_conflicts_on_update == "PRESERVE"])
     error_message = "Valid values for 'resolve_conflicts_on_update' are 'NONE', 'OVERWRITE', and 'PRESERVE'."
   }
+}
+
+variable "enable_aws_load_balancer_controller" {
+  description = "Enable AWS Load Balancer Controller with IAM role and RBAC"
+  type        = bool
+  default     = false
+}
+
+#########################################
+# Workloads
+#########################################
+
+variable "workloads" {
+  description = "List of workloads to deploy"
+  type = list(object({
+    name             = string
+    namespace        = string
+    replicas         = optional(number, 1)
+    labels           = optional(map(string), {})
+    create_namespace = optional(bool, false)
+    namespace_metadata = optional(object({
+      labels      = optional(map(string), {})
+      annotations = optional(map(string), {})
+    }), {})
+    service_account_name = optional(string, null)
+    irsa = optional(object({
+      enabled     = bool
+      policy_arns = optional(list(string), [])
+      }), {
+      enabled     = false
+      policy_arns = []
+    })
+    containers = optional(list(object({
+      name    = string
+      image   = string
+      command = optional(list(string), null)
+      args    = optional(list(string), null)
+      env = optional(list(object({
+        name  = string
+        value = string
+      })), [])
+      resources = optional(object({
+        limits   = optional(map(string), {})
+        requests = optional(map(string), {})
+      }), null)
+      volume_mounts = optional(list(object({
+        name       = string
+        mount_path = string
+      })), [])
+    })), [])
+    init_containers = optional(list(object({
+      name    = string
+      image   = string
+      command = optional(list(string), null)
+      args    = optional(list(string), null)
+      env = optional(list(object({
+        name  = string
+        value = string
+      })), [])
+      volume_mounts = optional(list(object({
+        name       = string
+        mount_path = string
+      })), [])
+    })), [])
+    volumes = optional(list(object({
+      name = string
+      config_map = optional(object({
+        name = string
+      }), null)
+      secret = optional(object({
+        secret_name = string
+      }), null)
+    })), [])
+    configmaps = optional(list(object({
+      name = string
+      data = map(string)
+    })), [])
+    create_service = optional(bool, true)
+    service_type   = optional(string, "ClusterIP")
+    service_ports = optional(list(object({
+      name        = string
+      port        = number
+      target_port = number
+      protocol    = optional(string, "TCP")
+    })), [])
+    service_annotations = optional(map(string), {})
+    create_ingress      = optional(bool, false)
+    ingress_scheme      = optional(string, "internet-facing")
+    ingress_protocol    = optional(string, "http")
+    ingress_annotations = optional(map(string), {})
+    ingress_rules = optional(list(object({
+      host = string
+      http_paths = list(object({
+        path         = string
+        path_type    = optional(string, "Prefix")
+        backend_port = number
+      }))
+    })), [])
+    logging = optional(object({
+      enabled = bool
+      }), {
+      enabled = false
+    })
+    tags = optional(map(string), {})
+  }))
+  default = []
 }
 
 #########################################

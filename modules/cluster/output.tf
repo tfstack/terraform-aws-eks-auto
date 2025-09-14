@@ -33,11 +33,19 @@ output "eks_cluster_auth_token" {
 #########################################
 
 output "oidc_provider_arn" {
-  value = try(aws_iam_openid_connect_provider.this[0].arn, null)
+  value = var.enable_oidc ? (
+    var.existing_oidc_provider_arn != null ?
+    data.aws_iam_openid_connect_provider.existing[0].arn :
+    aws_iam_openid_connect_provider.this[0].arn
+  ) : null
 }
 
 output "oidc_provider_url" {
-  value = try(aws_iam_openid_connect_provider.this[0].url, null)
+  value = var.enable_oidc ? (
+    var.existing_oidc_provider_arn != null ?
+    data.aws_iam_openid_connect_provider.existing[0].url :
+    aws_iam_openid_connect_provider.this[0].url
+  ) : null
 }
 
 #########################################

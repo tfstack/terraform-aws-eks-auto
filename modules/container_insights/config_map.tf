@@ -7,7 +7,7 @@ resource "kubernetes_config_map" "fluent_bit_cluster_info" {
 
   metadata {
     name      = "fluent-bit-cluster-info"
-    namespace = "amazon-cloudwatch"
+    namespace = var.fluentbit_namespace
   }
 
   data = {
@@ -16,6 +16,6 @@ resource "kubernetes_config_map" "fluent_bit_cluster_info" {
     "http.port"    = var.fluentbit_http_port != "" ? var.fluentbit_http_port : null
     "read.head"    = var.fluentbit_read_from_head
     "read.tail"    = var.fluentbit_read_from_head == "On" ? "Off" : "On"
-    "logs.region"  = data.aws_region.current.name
+    "logs.region"  = data.aws_region.current.region
   }
 }

@@ -8,6 +8,24 @@ variable "cluster_version" {
   type        = string
 }
 
+variable "oidc_provider_arn" {
+  description = "ARN of the OIDC provider for IRSA"
+  type        = string
+  default     = null
+}
+
+variable "enable_aws_load_balancer_controller" {
+  description = "Enable AWS Load Balancer Controller"
+  type        = bool
+  default     = false
+}
+
+variable "tags" {
+  description = "A map of tags to use on all resources"
+  type        = map(string)
+  default     = {}
+}
+
 variable "eks_addons" {
   description = "List of EKS add-ons to install with optional configurations"
   type = list(object({
@@ -18,28 +36,14 @@ variable "eks_addons" {
     resolve_conflicts_on_update = optional(string, "NONE")
     tags                        = optional(map(string), {})
     preserve                    = optional(bool, false)
-    fargate_required            = optional(bool, false)
-    namespace                   = optional(string, "kube-system")
-    label_override              = optional(string, null)
   }))
   default = []
 
   validation {
     condition = alltrue([
-      for addon in var.eks_addons :
-      (
-        addon.fargate_required != true || !can(regex("^eks-", addon.name))
-      )
-    ])
-    error_message = "Fargate profile names must not start with the reserved 'eks-' prefix. Use a custom name when 'fargate_required' is true."
-  }
-
-  validation {
-    condition = alltrue([
       for addon in var.eks_addons : length(setsubtract(keys(addon), [
         "name", "version", "configuration_values", "resolve_conflicts_on_create",
-        "resolve_conflicts_on_update", "tags", "preserve", "fargate_required",
-        "namespace", "label_override"
+        "resolve_conflicts_on_update", "tags", "preserve"
       ])) == 0
     ])
     error_message = "Each EKS add-on object must contain only the allowed attributes."

@@ -76,7 +76,7 @@
 #         Sid      = "DescribeClusterAccess",
 #         Effect   = "Allow",
 #         Action   = ["eks:DescribeCluster"],
-#         Resource = "arn:aws:eks:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:cluster/${var.cluster_name}"
+#         Resource = "arn:aws:eks:${data.aws_region.current.region}:${data.aws_caller_identity.current.account_id}:cluster/${var.cluster_name}"
 #       },
 #       {
 #         Sid      = "ListAssociatedAccessPolicies",

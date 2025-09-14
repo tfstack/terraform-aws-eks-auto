@@ -20,15 +20,13 @@ module "cluster" {
   cluster_name                  = var.cluster_name
   cluster_version               = var.cluster_version
   tags                          = var.tags
-  eks_auto_cluster_role_arn     = module.cluster.eks_auto_cluster_role_arn
-  eks_auto_node_role_arn        = module.cluster.eks_auto_node_role_arn
   vpc_id                        = var.vpc_id
   cluster_vpc_config            = var.cluster_vpc_config
   cluster_node_pools            = var.cluster_node_pools
   cluster_enabled_log_types     = var.cluster_enabled_log_types
   enable_cluster_encryption     = var.enable_cluster_encryption
   enable_elastic_load_balancing = var.enable_elastic_load_balancing
-  enable_irsa                   = var.enable_irsa
+  enable_oidc                   = var.enable_oidc
   eks_log_prevent_destroy       = var.eks_log_prevent_destroy
   eks_log_retention_days        = var.eks_log_retention_days
 }
@@ -44,6 +42,25 @@ module "namespaces" {
 
   depends_on = [
     module.cluster
+  ]
+}
+
+#########################################
+# Module: EKS Add-ons
+#########################################
+
+module "addons" {
+  source = "./modules/addons"
+
+  cluster_name                        = module.cluster.cluster_name
+  cluster_version                     = module.cluster.cluster_version
+  eks_addons                          = var.eks_addons
+  oidc_provider_arn                   = module.cluster.oidc_provider_arn
+  enable_aws_load_balancer_controller = var.enable_aws_load_balancer_controller
+  tags                                = var.tags
+
+  depends_on = [
+    module.namespaces
   ]
 }
 
@@ -64,7 +81,7 @@ module "ebs_csi_controller" {
   tags = var.tags
 
   depends_on = [
-    module.namespaces
+    module.addons # Wait for OIDC provider to be ready
   ]
 }
 
@@ -77,7 +94,7 @@ module "container_insights" {
 
   cluster_name              = module.cluster.cluster_name
   enable_container_insights = var.enable_container_insights
-  fluentbit_sa_namespace    = var.fluentbit_sa_namespace
+  fluentbit_namespace       = var.fluentbit_namespace
   fluentbit_sa_name         = var.fluentbit_sa_name
   oidc_provider_arn         = module.cluster.oidc_provider_arn
   oidc_provider_url         = module.cluster.oidc_provider_url
@@ -90,76 +107,50 @@ module "container_insights" {
 }
 
 #########################################
-# Module: EKS Add-ons - Prometheus
+# Module: Workloads
 #########################################
 
-module "prometheus" {
-  source = "./modules/prometheus"
+module "workloads" {
+  for_each = { for workload in var.workloads : workload.name => workload }
+  source   = "./modules/workload"
 
-  enable_prometheus        = var.enable_prometheus
-  prometheus_chart_version = var.prometheus_chart_version
+  name         = each.value.name
+  namespace    = each.value.namespace
+  cluster_name = module.cluster.cluster_name
+  replicas     = each.value.replicas
+  labels       = each.value.labels
+
+  create_namespace   = each.value.create_namespace
+  namespace_metadata = each.value.namespace_metadata
+
+  service_account_name = each.value.service_account_name
+
+  irsa = {
+    enabled           = each.value.irsa.enabled
+    oidc_provider_arn = each.value.irsa.enabled ? module.cluster.oidc_provider_arn : ""
+    policy_arns       = each.value.irsa.policy_arns
+  }
+
+  containers      = each.value.containers
+  init_containers = each.value.init_containers
+  volumes         = each.value.volumes
+  configmaps      = each.value.configmaps
+
+  create_service      = each.value.create_service
+  service_type        = each.value.service_type
+  service_ports       = each.value.service_ports
+  service_annotations = each.value.service_annotations
+
+  create_ingress      = each.value.create_ingress
+  ingress_scheme      = each.value.ingress_scheme
+  ingress_protocol    = each.value.ingress_protocol
+  ingress_annotations = each.value.ingress_annotations
+  ingress_rules       = each.value.ingress_rules
+
+  logging = each.value.logging
+  tags    = merge(var.tags, each.value.tags)
 
   depends_on = [
-    module.namespaces
-  ]
-}
-
-#########################################
-# Module: EKS Add-ons
-#########################################
-
-module "addons" {
-  source = "./modules/addons"
-
-  cluster_name    = module.cluster.cluster_name
-  cluster_version = module.cluster.cluster_version
-  eks_addons      = var.eks_addons
-
-  depends_on = [
-    module.namespaces
-  ]
-}
-
-#########################################
-# Module: Kubernetes Applications
-#########################################
-
-module "k8s_apps" {
-  source = "./modules/k8s_apps"
-
-  apps = var.apps
-
-  depends_on = [
-    module.namespaces,
     module.container_insights
   ]
 }
-
-# # module "observability" {
-# #   source = "./modules/observability"
-
-# #   cluster_name                = module.cluster.cluster_name
-# #   aws_observability_namespace = "aws-observability"
-
-# #   depends_on = [
-# #     module.executor
-# #   ]
-# # }
-
-# # module "metrics" {
-# #   source = "./modules/metrics"
-
-# #   depends_on = [
-# #     module.cluster
-# #   ]
-# # }
-
-# module "helm_releases" {
-#   source = "./modules/helm_releases"
-
-#   helm_charts = var.helm_charts
-
-#   depends_on = [
-#     module.cluster
-#   ]
-# }

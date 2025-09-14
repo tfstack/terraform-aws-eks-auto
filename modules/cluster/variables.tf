@@ -69,6 +69,7 @@ variable "timeouts" {
 variable "eks_auto_cluster_role_arn" {
   description = "Optional. Provide an existing IAM role ARN for EKS Fargate. If not set, a new role will be created."
   type        = string
+  default     = null
 
   validation {
     condition     = var.eks_auto_cluster_role_arn == null || can(regex("^arn:aws:iam::[0-9]{12}:role/.+", var.eks_auto_cluster_role_arn))
@@ -79,9 +80,10 @@ variable "eks_auto_cluster_role_arn" {
 variable "eks_auto_node_role_arn" {
   description = "ARN of an existing IAM role for EKS worker nodes (e.g., from a node group or auto scaling group)."
   type        = string
+  default     = null
 
   validation {
-    condition     = length(var.eks_auto_node_role_arn) > 0 && can(regex("^arn:aws:iam::[0-9]{12}:role/.+", var.eks_auto_node_role_arn))
+    condition     = var.eks_auto_node_role_arn == null || can(regex("^arn:aws:iam::[0-9]{12}:role/.+", var.eks_auto_node_role_arn))
     error_message = "You must provide a valid, non-empty IAM role ARN (e.g., arn:aws:iam::123456789012:role/NodeInstanceRole)."
   }
 }
@@ -115,6 +117,7 @@ variable "cluster_vpc_config" {
     security_group_ids      = list(string)
     endpoint_private_access = bool
     endpoint_public_access  = bool
+    service_cidr            = optional(string, "172.20.0.0/16")
   })
 }
 
@@ -134,10 +137,21 @@ variable "enable_elastic_load_balancing" {
   default     = true
 }
 
-variable "enable_irsa" {
+variable "enable_oidc" {
   description = "Enable IAM Roles for Service Accounts (IRSA) support by creating the OIDC provider for the EKS cluster."
   type        = bool
   default     = false
+}
+
+variable "existing_oidc_provider_arn" {
+  description = "ARN of an existing OIDC provider to use instead of creating a new one"
+  type        = string
+  default     = null
+
+  validation {
+    condition     = var.existing_oidc_provider_arn == null || can(regex("^arn:aws:iam::[0-9]{12}:oidc-provider/.+", var.existing_oidc_provider_arn))
+    error_message = "If provided, the value must be a valid OIDC provider ARN (e.g., arn:aws:iam::123456789012:oidc-provider/oidc.eks.region.amazonaws.com/id/EXAMPLED539D4633E53DE1B716D3041E)."
+  }
 }
 
 variable "enable_container_insights" {

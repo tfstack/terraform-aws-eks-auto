@@ -7,7 +7,7 @@ resource "kubernetes_service_account" "fluentbit" {
 
   metadata {
     name      = var.fluentbit_sa_name
-    namespace = var.fluentbit_sa_namespace
+    namespace = var.fluentbit_namespace
 
     annotations = {
       "eks.amazonaws.com/role-arn" = aws_iam_role.fluentbit_irsa[0].arn

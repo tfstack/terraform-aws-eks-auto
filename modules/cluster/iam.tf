@@ -79,8 +79,8 @@ resource "aws_iam_policy" "eks_node_ebs_support" {
           "ec2:DetachVolume"
         ],
         Resource = [
-          "arn:aws:ec2:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:volume/*",
-          "arn:aws:ec2:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:instance/*"
+          "arn:aws:ec2:${data.aws_region.current.region}:${data.aws_caller_identity.current.account_id}:volume/*",
+          "arn:aws:ec2:${data.aws_region.current.region}:${data.aws_caller_identity.current.account_id}:instance/*"
         ]
       },
       {
@@ -140,13 +140,13 @@ resource "aws_iam_role_policy_attachment" "eks_node_ebs_support_attach" {
 #         Sid      = "AllowSecretsManagerAccess",
 #         Effect   = "Allow",
 #         Action   = ["secretsmanager:GetSecretValue"],
-#         Resource = "arn:aws:secretsmanager:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:secret:eks/*"
+#         Resource = "arn:aws:secretsmanager:${data.aws_region.current.region}:${data.aws_caller_identity.current.account_id}:secret:eks/*"
 #       },
 #       {
 #         Sid      = "AllowKMSDecrypt",
 #         Effect   = "Allow",
 #         Action   = ["kms:Decrypt"],
-#         Resource = "arn:aws:kms:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:key/*"
+#         Resource = "arn:aws:kms:${data.aws_region.current.region}:${data.aws_caller_identity.current.account_id}:key/*"
 #       }
 #     ]
 #   })
@@ -165,7 +165,7 @@ resource "aws_iam_role_policy_attachment" "eks_node_ebs_support_attach" {
 #         Sid      = "CreateLogGroup",
 #         Effect   = "Allow",
 #         Action   = "logs:CreateLogGroup",
-#         Resource = "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:/aws/eks/${var.cluster_name}/logs"
+#         Resource = "arn:aws:logs:${data.aws_region.current.region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/eks/${var.cluster_name}/logs"
 #       },
 #       {
 #         Sid    = "StreamAndPutLogs",
@@ -175,7 +175,7 @@ resource "aws_iam_role_policy_attachment" "eks_node_ebs_support_attach" {
 #           "logs:PutLogEvents",
 #           "logs:DescribeLogStreams"
 #         ],
-#         Resource = "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:/aws/eks/${var.cluster_name}/logs:*"
+#         Resource = "arn:aws:logs:${data.aws_region.current.region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/eks/${var.cluster_name}/logs:*"
 #       }
 #     ]
 #   })
