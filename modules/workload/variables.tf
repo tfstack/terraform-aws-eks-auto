@@ -46,7 +46,7 @@ variable "namespace_metadata" {
 }
 
 variable "service_account_name" {
-  description = "Name of the service account (defaults to workload name)"
+  description = "Name of the service account (defaults to workload name if not specified)"
   type        = string
   default     = null
 }

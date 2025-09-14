@@ -54,10 +54,16 @@ output "ingress_namespace" {
 
 output "alb_dns_name" {
   description = "DNS name of the Application Load Balancer"
-  value       = var.create_ingress ? kubernetes_ingress_v1.this[0].status[0].load_balancer[0].ingress[0].hostname : null
+  value = var.create_ingress ? try(
+    kubernetes_ingress_v1.this[0].status[0].load_balancer[0].ingress[0].hostname,
+    null
+  ) : null
 }
 
 output "alb_url" {
   description = "URL of the Application Load Balancer"
-  value       = var.create_ingress ? "${var.ingress_protocol}://${kubernetes_ingress_v1.this[0].status[0].load_balancer[0].ingress[0].hostname}" : null
+  value = var.create_ingress ? try(
+    "${var.ingress_protocol}://${kubernetes_ingress_v1.this[0].status[0].load_balancer[0].ingress[0].hostname}",
+    null
+  ) : null
 }

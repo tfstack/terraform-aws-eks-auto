@@ -1,23 +1,13 @@
 #########################################
-# Locals
+# Workload Module
 #########################################
 
 locals {
-  sa_name = var.service_account_name != null ? var.service_account_name : var.name
-
-  configmap_hash = sha256(join("", [
-    for cm in var.configmaps : join("", values(cm.data))
-  ]))
-
-  effective_namespace_labels      = try(var.namespace_metadata.labels, {})
-  effective_namespace_annotations = try(var.namespace_metadata.annotations, {})
-
-  # Service-related locals
   target_namespace = var.create_namespace ? kubernetes_namespace.this[0].metadata[0].name : var.namespace
+
   common_labels = merge(
     var.labels,
     {
-      "app"                        = var.name
       "app.kubernetes.io/name"     = var.name
       "app.kubernetes.io/instance" = var.name
     }
@@ -25,7 +15,7 @@ locals {
 }
 
 #########################################
-# Kubernetes Namespace
+# Namespace (Optional)
 #########################################
 
 resource "kubernetes_namespace" "this" {
@@ -33,13 +23,13 @@ resource "kubernetes_namespace" "this" {
 
   metadata {
     name        = var.namespace
-    labels      = local.effective_namespace_labels
-    annotations = local.effective_namespace_annotations
+    labels      = merge(local.common_labels, var.namespace_metadata.labels)
+    annotations = var.namespace_metadata.annotations
   }
 }
 
 #########################################
-# IAM Role (IRSA)
+# Service Account with IRSA
 #########################################
 
 resource "aws_iam_role" "irsa" {
@@ -48,69 +38,68 @@ resource "aws_iam_role" "irsa" {
   name = "${var.cluster_name}-${var.name}-irsa"
 
   assume_role_policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [{
-      Effect = "Allow",
-      Principal = {
-        Federated = var.irsa.oidc_provider_arn
-      },
-      Action = "sts:AssumeRoleWithWebIdentity",
-      Condition = {
-        StringEquals = {
-          "${replace(var.irsa.oidc_provider_arn, ":oidc-provider/", ":sub")}" = "system:serviceaccount:${var.namespace}:${local.sa_name}"
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Principal = {
+          Federated = var.irsa.oidc_provider_arn
+        }
+        Action = "sts:AssumeRoleWithWebIdentity"
+        Condition = {
+          StringEquals = {
+            "${replace(var.irsa.oidc_provider_arn, "/^(.*provider/)/", "")}:sub" = "system:serviceaccount:${local.target_namespace}:${var.service_account_name}"
+            "${replace(var.irsa.oidc_provider_arn, "/^(.*provider/)/", "")}:aud" = "sts.amazonaws.com"
+          }
         }
       }
-    }]
+    ]
   })
 
   tags = var.tags
 }
 
-resource "aws_iam_role_policy_attachment" "this" {
-  for_each = var.irsa.enabled ? toset(try(var.irsa.policy_arns, [])) : toset([])
+resource "aws_iam_role_policy_attachment" "irsa" {
+  count = var.irsa.enabled ? length(var.irsa.policy_arns) : 0
 
   role       = aws_iam_role.irsa[0].name
-  policy_arn = each.value
+  policy_arn = var.irsa.policy_arns[count.index]
 }
-
-#########################################
-# Kubernetes Service Account
-#########################################
 
 resource "kubernetes_service_account" "this" {
   metadata {
-    name      = local.sa_name
+    name      = var.service_account_name != null ? var.service_account_name : var.name
     namespace = local.target_namespace
-
+    labels    = local.common_labels
     annotations = var.irsa.enabled ? {
       "eks.amazonaws.com/role-arn" = aws_iam_role.irsa[0].arn
     } : {}
   }
+
+  depends_on = [kubernetes_namespace.this]
 }
 
 #########################################
-# Kubernetes ConfigMaps
+# ConfigMaps
 #########################################
 
 resource "kubernetes_config_map" "this" {
   for_each = { for cm in var.configmaps : cm.name => cm }
 
   metadata {
-    name      = each.key
+    name      = each.value.name
     namespace = local.target_namespace
+    labels    = local.common_labels
   }
 
-  data = each.value.data
-}
+  data        = each.value.data
+  binary_data = each.value.binary_data
 
-resource "null_resource" "configmap_trigger" {
-  triggers = {
-    configmap_hash = local.configmap_hash
-  }
+  depends_on = [kubernetes_namespace.this]
 }
 
 #########################################
-# Kubernetes Deployment
+# Deployment
 #########################################
 
 resource "kubernetes_deployment" "this" {
@@ -118,12 +107,6 @@ resource "kubernetes_deployment" "this" {
     name      = var.name
     namespace = local.target_namespace
     labels    = local.common_labels
-
-    annotations = merge(
-      var.logging.enabled ? {
-        "eks.amazonaws.com/enable-logging" = "true"
-      } : {}
-    )
   }
 
   spec {
@@ -131,7 +114,8 @@ resource "kubernetes_deployment" "this" {
 
     selector {
       match_labels = {
-        app = var.name
+        "app.kubernetes.io/name"     = var.name
+        "app.kubernetes.io/instance" = var.name
       }
     }
 
@@ -141,32 +125,29 @@ resource "kubernetes_deployment" "this" {
       }
 
       spec {
-        service_account_name = local.sa_name
-
-        # EKS Auto Mode - no node selector or tolerations needed
-        # AWS manages node placement automatically
+        service_account_name = kubernetes_service_account.this.metadata[0].name
 
         dynamic "init_container" {
           for_each = var.init_containers
           content {
             name    = init_container.value.name
             image   = init_container.value.image
-            command = try(init_container.value.command, null)
-            args    = try(init_container.value.args, null)
+            command = init_container.value.command
+            args    = init_container.value.args
 
             dynamic "env" {
-              for_each = coalesce(init_container.value.env, [])
+              for_each = init_container.value.env
               content {
                 name  = env.value.name
                 value = env.value.value
               }
             }
 
-            dynamic "volume_mount" {
-              for_each = coalesce(init_container.value.volume_mounts, [])
+            dynamic "resources" {
+              for_each = init_container.value.resources != null ? [init_container.value.resources] : []
               content {
-                name       = volume_mount.value.name
-                mount_path = volume_mount.value.mount_path
+                limits   = resources.value.limits
+                requests = resources.value.requests
               }
             }
           }
@@ -177,11 +158,11 @@ resource "kubernetes_deployment" "this" {
           content {
             name    = container.value.name
             image   = container.value.image
-            command = try(container.value.command, null)
-            args    = try(container.value.args, null)
+            command = container.value.command
+            args    = container.value.args
 
             dynamic "env" {
-              for_each = coalesce(container.value.env, [])
+              for_each = container.value.env
               content {
                 name  = env.value.name
                 value = env.value.value
@@ -191,13 +172,13 @@ resource "kubernetes_deployment" "this" {
             dynamic "resources" {
               for_each = container.value.resources != null ? [container.value.resources] : []
               content {
-                limits   = try(resources.value.limits, null)
-                requests = try(resources.value.requests, null)
+                limits   = resources.value.limits
+                requests = resources.value.requests
               }
             }
 
             dynamic "volume_mount" {
-              for_each = coalesce(container.value.volume_mounts, [])
+              for_each = container.value.volume_mounts
               content {
                 name       = volume_mount.value.name
                 mount_path = volume_mount.value.mount_path
@@ -224,6 +205,13 @@ resource "kubernetes_deployment" "this" {
                 secret_name = secret.value.secret_name
               }
             }
+
+            dynamic "empty_dir" {
+              for_each = volume.value.empty_dir != null ? [volume.value.empty_dir] : []
+              content {
+                size_limit = empty_dir.value.size_limit
+              }
+            }
           }
         }
       }
@@ -231,13 +219,13 @@ resource "kubernetes_deployment" "this" {
   }
 
   depends_on = [
-    null_resource.configmap_trigger,
-    kubernetes_service_account.this
+    kubernetes_service_account.this,
+    kubernetes_config_map.this
   ]
 }
 
 #########################################
-# Kubernetes Service
+# Service
 #########################################
 
 resource "kubernetes_service" "this" {
@@ -251,7 +239,10 @@ resource "kubernetes_service" "this" {
   }
 
   spec {
-    selector = local.common_labels
+    selector = {
+      "app.kubernetes.io/name"     = var.name
+      "app.kubernetes.io/instance" = var.name
+    }
 
     dynamic "port" {
       for_each = var.service_ports
@@ -259,21 +250,15 @@ resource "kubernetes_service" "this" {
         name        = port.value.name
         port        = port.value.port
         target_port = port.value.target_port
-        protocol    = try(port.value.protocol, "TCP")
+        protocol    = port.value.protocol
       }
     }
 
     type = var.service_type
   }
 
-  depends_on = [
-    kubernetes_deployment.this
-  ]
+  depends_on = [kubernetes_deployment.this]
 }
-
-#########################################
-# Kubernetes Ingress
-#########################################
 
 resource "kubernetes_ingress_v1" "this" {
   count = var.create_ingress ? 1 : 0
@@ -285,26 +270,27 @@ resource "kubernetes_ingress_v1" "this" {
     annotations = merge(
       var.ingress_annotations,
       {
-        "alb.ingress.kubernetes.io/scheme" = var.ingress_scheme
+        "kubernetes.io/ingress.class"                                   = "alb"
+        "alb.ingress.kubernetes.io/scheme"                              = var.ingress_scheme
+        "alb.ingress.kubernetes.io/group.name"                          = var.name
+        "alb.ingress.kubernetes.io/manage-backend-security-group-rules" = "false"
       }
     )
-  }
-
-  lifecycle {
-    create_before_destroy = true
   }
 
   spec {
     dynamic "rule" {
       for_each = var.ingress_rules
       content {
-        host = rule.value.host
+        host = rule.value.host != "" ? rule.value.host : null
+
         http {
           dynamic "path" {
             for_each = rule.value.http_paths
             content {
               path      = path.value.path
-              path_type = try(path.value.path_type, "Prefix")
+              path_type = path.value.path_type
+
               backend {
                 service {
                   name = kubernetes_service.this[0].metadata[0].name
@@ -320,7 +306,18 @@ resource "kubernetes_ingress_v1" "this" {
     }
   }
 
-  depends_on = [
-    kubernetes_service.this
-  ]
+  # NOTE: do NOT use create_before_destroy here; it can deadlock with ALB/IngressGroup
+  lifecycle {
+    ignore_changes = [
+      metadata[0].annotations["alb.ingress.kubernetes.io/load-balancer-name"],
+      metadata[0].annotations["alb.ingress.kubernetes.io/target-group-arn"]
+    ]
+  }
+
+  timeouts {
+    create = "5m"
+    delete = "5m"
+  }
+
+  depends_on = [kubernetes_service.this]
 }
