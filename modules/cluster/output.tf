@@ -61,3 +61,12 @@ output "eks_auto_node_role_arn" {
   description = "IAM Role ARN for EKS Auto Mode EC2 nodes"
   value       = aws_iam_role.eks_auto_node.arn
 }
+
+#########################################
+# VPC Outputs
+#########################################
+
+output "vpc_id" {
+  description = "The ID of the VPC where the EKS cluster is deployed"
+  value       = var.vpc_id
+}

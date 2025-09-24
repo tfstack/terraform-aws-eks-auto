@@ -16,4 +16,16 @@ resource "kubernetes_namespace" "this" {
     labels      = var.namespace_labels
     annotations = var.namespace_annotations
   }
+
+  # Handle cluster deletion gracefully
+  lifecycle {
+    ignore_changes = [
+      metadata[0].annotations,
+      metadata[0].labels
+    ]
+  }
+
+  timeouts {
+    delete = "2m"
+  }
 }

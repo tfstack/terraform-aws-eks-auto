@@ -1,0 +1,1126 @@
+Terraform EKS Auto Mode Destroy Troubleshooting Report
+Generated: Wed Sep 24 08:03:41 AM NZST 2025
+==================================================
+
+AWS CLI Access:
+{
+    "UserId": "AROAY6ZPISCY6TX4YY36J:Session_johna",
+    "Account": "615890063537",
+    "Arn": "arn:aws:sts::615890063537:assumed-role/tf-dev-administrator-role/Session_johna"
+}
+
+Terraform State:
+data.aws_availability_zones.available
+data.aws_caller_identity.current
+data.aws_region.current
+data.http.my_public_ip
+random_string.suffix
+module.vpc.data.aws_region.current
+module.vpc.aws_eip.nat[0]
+module.vpc.aws_internet_gateway.this[0]
+module.vpc.aws_nat_gateway.this[0]
+module.vpc.aws_network_acl.private[0]
+module.vpc.aws_network_acl.public[0]
+module.vpc.aws_route_table.private[0]
+module.vpc.aws_route_table.private[1]
+module.vpc.aws_route_table.private[2]
+module.vpc.aws_route_table.public[0]
+module.vpc.aws_route_table.public[1]
+module.vpc.aws_route_table.public[2]
+module.vpc.aws_route_table_association.private[0]
+module.vpc.aws_route_table_association.private[1]
+module.vpc.aws_route_table_association.private[2]
+module.vpc.aws_route_table_association.public[0]
+module.vpc.aws_route_table_association.public[1]
+module.vpc.aws_route_table_association.public[2]
+module.vpc.aws_subnet.private[0]
+module.vpc.aws_subnet.private[1]
+module.vpc.aws_subnet.private[2]
+module.vpc.aws_subnet.public[0]
+module.vpc.aws_subnet.public[1]
+module.vpc.aws_subnet.public[2]
+module.vpc.aws_vpc.this
+module.eks_auto.module.addons.data.aws_eks_addon_version.latest_version["metrics-server"]
+module.eks_auto.module.addons.data.aws_eks_cluster.cluster
+module.eks_auto.module.addons.data.aws_eks_cluster_versions.available
+module.eks_auto.module.addons.data.aws_region.current
+module.eks_auto.module.addons.aws_eks_addon.this["metrics-server"]
+module.eks_auto.module.addons.aws_iam_policy.aws_load_balancer_controller[0]
+module.eks_auto.module.addons.aws_iam_role.aws_load_balancer_controller[0]
+module.eks_auto.module.addons.aws_iam_role_policy_attachment.aws_load_balancer_controller[0]
+module.eks_auto.module.addons.helm_release.aws_load_balancer_controller[0]
+module.eks_auto.module.addons.kubernetes_cluster_role.aws_load_balancer_controller[0]
+module.eks_auto.module.addons.kubernetes_cluster_role_binding.aws_load_balancer_controller[0]
+module.eks_auto.module.addons.kubernetes_service_account.aws_load_balancer_controller[0]
+module.eks_auto.module.cluster.data.aws_caller_identity.current
+module.eks_auto.module.cluster.data.aws_eks_cluster_auth.this
+module.eks_auto.module.cluster.data.aws_iam_role.terraform_executor
+module.eks_auto.module.cluster.data.aws_region.current
+module.eks_auto.module.cluster.data.tls_certificate.eks_oidc[0]
+module.eks_auto.module.cluster.aws_cloudwatch_log_group.eks_cluster_without_prevent_destroy[0]
+module.eks_auto.module.cluster.aws_cloudwatch_log_group.eks_logs_without_prevent_destroy[0]
+module.eks_auto.module.cluster.aws_eks_access_entry.terraform_executor
+module.eks_auto.module.cluster.aws_eks_access_policy_association.terraform_executor
+module.eks_auto.module.cluster.aws_eks_cluster.this
+module.eks_auto.module.cluster.aws_iam_openid_connect_provider.this[0]
+module.eks_auto.module.cluster.aws_iam_policy.eks_node_ebs_support
+module.eks_auto.module.cluster.aws_iam_role.eks_auto_cluster
+module.eks_auto.module.cluster.aws_iam_role.eks_auto_node
+module.eks_auto.module.cluster.aws_iam_role_policy_attachment.eks_auto_cluster["arn:aws:iam::aws:policy/AmazonEKSBlockStoragePolicy"]
+module.eks_auto.module.cluster.aws_iam_role_policy_attachment.eks_auto_cluster["arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"]
+module.eks_auto.module.cluster.aws_iam_role_policy_attachment.eks_auto_cluster["arn:aws:iam::aws:policy/AmazonEKSComputePolicy"]
+module.eks_auto.module.cluster.aws_iam_role_policy_attachment.eks_auto_cluster["arn:aws:iam::aws:policy/AmazonEKSLoadBalancingPolicy"]
+module.eks_auto.module.cluster.aws_iam_role_policy_attachment.eks_auto_cluster["arn:aws:iam::aws:policy/AmazonEKSNetworkingPolicy"]
+module.eks_auto.module.cluster.aws_iam_role_policy_attachment.eks_auto_node["arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPullOnly"]
+module.eks_auto.module.cluster.aws_iam_role_policy_attachment.eks_auto_node["arn:aws:iam::aws:policy/AmazonEKSWorkerNodeMinimalPolicy"]
+module.eks_auto.module.cluster.aws_iam_role_policy_attachment.eks_node_ebs_support_attach
+module.eks_auto.module.cluster.aws_security_group.eks[0]
+module.eks_auto.module.cluster.aws_security_group.eks_nodes[0]
+module.eks_auto.module.ebs_csi_controller.data.aws_region.current
+module.eks_auto.module.ebs_csi_controller.aws_iam_role.ebs_csi_controller_irsa[0]
+module.eks_auto.module.ebs_csi_controller.aws_iam_role_policy.ebs_csi_controller_extra[0]
+module.eks_auto.module.ebs_csi_controller.aws_iam_role_policy_attachment.ebs_csi_controller_policy[0]
+module.eks_auto.module.namespaces.kubernetes_namespace.this["aws-observability"]
+module.eks_auto.module.namespaces.kubernetes_namespace.this["prometheus"]
+
+EKS Clusters:
+{
+    "clusters": []
+}
+
+VPCs:
+{
+    "Vpcs": [
+        {
+            "OwnerId": "615890063537",
+            "InstanceTenancy": "default",
+            "Ipv6CidrBlockAssociationSet": [
+                {
+                    "AssociationId": "vpc-cidr-assoc-012c1348ea862266f",
+                    "Ipv6CidrBlock": "2406:da1c:d2f:a900::/56",
+                    "Ipv6CidrBlockState": {
+                        "State": "associated"
+                    },
+                    "NetworkBorderGroup": "ap-southeast-2",
+                    "Ipv6Pool": "Amazon",
+                    "Ipv6AddressAttribute": "public",
+                    "IpSource": "amazon"
+                }
+            ],
+            "CidrBlockAssociationSet": [
+                {
+                    "AssociationId": "vpc-cidr-assoc-0c7b79cf75160c2a9",
+                    "CidrBlock": "10.0.0.0/16",
+                    "CidrBlockState": {
+                        "State": "associated"
+                    }
+                }
+            ],
+            "IsDefault": false,
+            "Tags": [
+                {
+                    "Key": "Name",
+                    "Value": "cltest-51z4"
+                },
+                {
+                    "Key": "Environment",
+                    "Value": "dev"
+                },
+                {
+                    "Key": "Project",
+                    "Value": "example"
+                }
+            ],
+            "BlockPublicAccessStates": {
+                "InternetGatewayBlockMode": "off"
+            },
+            "VpcId": "vpc-092f52dc3f4e03234",
+            "State": "available",
+            "CidrBlock": "10.0.0.0/16",
+            "DhcpOptionsId": "dopt-86a895e2"
+        }
+    ]
+}
+
+Load Balancers:
+{
+    "LoadBalancers": [
+        {
+            "LoadBalancerArn": "arn:aws:elasticloadbalancing:ap-southeast-2:615890063537:loadbalancer/app/tf-dev-dapper-api-alb/b464ba8da10ecd8c",
+            "DNSName": "tf-dev-dapper-api-alb-385954953.ap-southeast-2.elb.amazonaws.com",
+            "CanonicalHostedZoneId": "Z1GM3OXH4ZPM65",
+            "CreatedTime": "2019-11-11T01:07:31.860000+00:00",
+            "LoadBalancerName": "tf-dev-dapper-api-alb",
+            "Scheme": "internet-facing",
+            "VpcId": "vpc-00b1c367",
+            "State": {
+                "Code": "active"
+            },
+            "Type": "application",
+            "AvailabilityZones": [
+                {
+                    "ZoneName": "ap-southeast-2c",
+                    "SubnetId": "subnet-1b62c643",
+                    "LoadBalancerAddresses": []
+                },
+                {
+                    "ZoneName": "ap-southeast-2a",
+                    "SubnetId": "subnet-82fddacb",
+                    "LoadBalancerAddresses": []
+                },
+                {
+                    "ZoneName": "ap-southeast-2b",
+                    "SubnetId": "subnet-a8b49ecf",
+                    "LoadBalancerAddresses": []
+                }
+            ],
+            "SecurityGroups": [
+                "sg-0381c2d7a1bf6d03e"
+            ],
+            "IpAddressType": "ipv4",
+            "EnablePrefixForIpv6SourceNat": "off"
+        },
+        {
+            "LoadBalancerArn": "arn:aws:elasticloadbalancing:ap-southeast-2:615890063537:loadbalancer/app/tf-dev-www-geonet-web/f49730d30f298641",
+            "DNSName": "tf-dev-www-geonet-web-2138914699.ap-southeast-2.elb.amazonaws.com",
+            "CanonicalHostedZoneId": "Z1GM3OXH4ZPM65",
+            "CreatedTime": "2020-08-12T00:07:09.340000+00:00",
+            "LoadBalancerName": "tf-dev-www-geonet-web",
+            "Scheme": "internet-facing",
+            "VpcId": "vpc-7585c412",
+            "State": {
+                "Code": "active"
+            },
+            "Type": "application",
+            "AvailabilityZones": [
+                {
+                    "ZoneName": "ap-southeast-2c",
+                    "SubnetId": "subnet-926fcbca",
+                    "LoadBalancerAddresses": []
+                },
+                {
+                    "ZoneName": "ap-southeast-2a",
+                    "SubnetId": "subnet-bcfaddf5",
+                    "LoadBalancerAddresses": []
+                },
+                {
+                    "ZoneName": "ap-southeast-2b",
+                    "SubnetId": "subnet-e8b49e8f",
+                    "LoadBalancerAddresses": []
+                }
+            ],
+            "SecurityGroups": [
+                "sg-05502a4969a876f7f",
+                "sg-0f032840678bbf279"
+            ],
+            "IpAddressType": "ipv4",
+            "EnablePrefixForIpv6SourceNat": "off"
+        },
+        {
+            "LoadBalancerArn": "arn:aws:elasticloadbalancing:ap-southeast-2:615890063537:loadbalancer/app/tf-dev-dapper-api-service/4d3cde5ca6b3fc45",
+            "DNSName": "internal-tf-dev-dapper-api-service-1017741550.ap-southeast-2.elb.amazonaws.com",
+            "CanonicalHostedZoneId": "Z1GM3OXH4ZPM65",
+            "CreatedTime": "2020-09-20T23:18:19.970000+00:00",
+            "LoadBalancerName": "tf-dev-dapper-api-service",
+            "Scheme": "internal",
+            "VpcId": "vpc-00b1c367",
+            "State": {
+                "Code": "active"
+            },
+            "Type": "application",
+            "AvailabilityZones": [
+                {
+                    "ZoneName": "ap-southeast-2a",
+                    "SubnetId": "subnet-0184ef79bdcd7a991",
+                    "LoadBalancerAddresses": []
+                },
+                {
+                    "ZoneName": "ap-southeast-2c",
+                    "SubnetId": "subnet-037918859602cffcb",
+                    "LoadBalancerAddresses": []
+                },
+                {
+                    "ZoneName": "ap-southeast-2b",
+                    "SubnetId": "subnet-0a5fc65c5ec1abb7e",
+                    "LoadBalancerAddresses": []
+                }
+            ],
+            "SecurityGroups": [
+                "sg-0c228be9d79167a7a",
+                "sg-063527a8b8544d2e3",
+                "sg-08573eae558272865",
+                "sg-041cc5d6bdbd9cc3a"
+            ],
+            "IpAddressType": "ipv4",
+            "EnablePrefixForIpv6SourceNat": "off"
+        },
+        {
+            "LoadBalancerArn": "arn:aws:elasticloadbalancing:ap-southeast-2:615890063537:loadbalancer/app/tf-dev-tilde-web/e537576f21d0ff44",
+            "DNSName": "tf-dev-tilde-web-1758485911.ap-southeast-2.elb.amazonaws.com",
+            "CanonicalHostedZoneId": "Z1GM3OXH4ZPM65",
+            "CreatedTime": "2021-12-17T01:45:06.570000+00:00",
+            "LoadBalancerName": "tf-dev-tilde-web",
+            "Scheme": "internet-facing",
+            "VpcId": "vpc-7585c412",
+            "State": {
+                "Code": "active"
+            },
+            "Type": "application",
+            "AvailabilityZones": [
+                {
+                    "ZoneName": "ap-southeast-2c",
+                    "SubnetId": "subnet-926fcbca",
+                    "LoadBalancerAddresses": []
+                },
+                {
+                    "ZoneName": "ap-southeast-2a",
+                    "SubnetId": "subnet-bcfaddf5",
+                    "LoadBalancerAddresses": []
+                },
+                {
+                    "ZoneName": "ap-southeast-2b",
+                    "SubnetId": "subnet-e8b49e8f",
+                    "LoadBalancerAddresses": []
+                }
+            ],
+            "SecurityGroups": [
+                "sg-05502a4969a876f7f",
+                "sg-05cb0d24882b0bcd6",
+                "sg-048cb8e8f2ceefc80"
+            ],
+            "IpAddressType": "ipv4",
+            "EnablePrefixForIpv6SourceNat": "off"
+        },
+        {
+            "LoadBalancerArn": "arn:aws:elasticloadbalancing:ap-southeast-2:615890063537:loadbalancer/app/tf-dev-shaking-layer-sip/d3ffd12a63d8fa5e",
+            "DNSName": "tf-dev-shaking-layer-sip-940599571.ap-southeast-2.elb.amazonaws.com",
+            "CanonicalHostedZoneId": "Z1GM3OXH4ZPM65",
+            "CreatedTime": "2022-05-17T04:20:59.520000+00:00",
+            "LoadBalancerName": "tf-dev-shaking-layer-sip",
+            "Scheme": "internet-facing",
+            "VpcId": "vpc-7585c412",
+            "State": {
+                "Code": "active"
+            },
+            "Type": "application",
+            "AvailabilityZones": [
+                {
+                    "ZoneName": "ap-southeast-2c",
+                    "SubnetId": "subnet-926fcbca",
+                    "LoadBalancerAddresses": []
+                },
+                {
+                    "ZoneName": "ap-southeast-2a",
+                    "SubnetId": "subnet-bcfaddf5",
+                    "LoadBalancerAddresses": []
+                },
+                {
+                    "ZoneName": "ap-southeast-2b",
+                    "SubnetId": "subnet-e8b49e8f",
+                    "LoadBalancerAddresses": []
+                }
+            ],
+            "SecurityGroups": [
+                "sg-05502a4969a876f7f",
+                "sg-05cb0d24882b0bcd6",
+                "sg-048cb8e8f2ceefc80"
+            ],
+            "IpAddressType": "ipv4",
+            "EnablePrefixForIpv6SourceNat": "off"
+        },
+        {
+            "LoadBalancerArn": "arn:aws:elasticloadbalancing:ap-southeast-2:615890063537:loadbalancer/app/tf-dev-shaking-layer-web/7961311bae616d4a",
+            "DNSName": "tf-dev-shaking-layer-web-706404679.ap-southeast-2.elb.amazonaws.com",
+            "CanonicalHostedZoneId": "Z1GM3OXH4ZPM65",
+            "CreatedTime": "2022-05-25T03:10:18.290000+00:00",
+            "LoadBalancerName": "tf-dev-shaking-layer-web",
+            "Scheme": "internet-facing",
+            "VpcId": "vpc-7585c412",
+            "State": {
+                "Code": "active"
+            },
+            "Type": "application",
+            "AvailabilityZones": [
+                {
+                    "ZoneName": "ap-southeast-2c",
+                    "SubnetId": "subnet-926fcbca",
+                    "LoadBalancerAddresses": []
+                },
+                {
+                    "ZoneName": "ap-southeast-2a",
+                    "SubnetId": "subnet-bcfaddf5",
+                    "LoadBalancerAddresses": []
+                },
+                {
+                    "ZoneName": "ap-southeast-2b",
+                    "SubnetId": "subnet-e8b49e8f",
+                    "LoadBalancerAddresses": []
+                }
+            ],
+            "SecurityGroups": [
+                "sg-05502a4969a876f7f",
+                "sg-05cb0d24882b0bcd6",
+                "sg-048cb8e8f2ceefc80"
+            ],
+            "IpAddressType": "ipv4",
+            "EnablePrefixForIpv6SourceNat": "off"
+        },
+        {
+            "LoadBalancerArn": "arn:aws:elasticloadbalancing:ap-southeast-2:615890063537:loadbalancer/app/tf-dev-felt-web/90dc8405ff175115",
+            "DNSName": "tf-dev-felt-web-1920473870.ap-southeast-2.elb.amazonaws.com",
+            "CanonicalHostedZoneId": "Z1GM3OXH4ZPM65",
+            "CreatedTime": "2023-08-01T00:16:02.700000+00:00",
+            "LoadBalancerName": "tf-dev-felt-web",
+            "Scheme": "internet-facing",
+            "VpcId": "vpc-7585c412",
+            "State": {
+                "Code": "active"
+            },
+            "Type": "application",
+            "AvailabilityZones": [
+                {
+                    "ZoneName": "ap-southeast-2c",
+                    "SubnetId": "subnet-926fcbca",
+                    "LoadBalancerAddresses": []
+                },
+                {
+                    "ZoneName": "ap-southeast-2a",
+                    "SubnetId": "subnet-bcfaddf5",
+                    "LoadBalancerAddresses": []
+                },
+                {
+                    "ZoneName": "ap-southeast-2b",
+                    "SubnetId": "subnet-e8b49e8f",
+                    "LoadBalancerAddresses": []
+                }
+            ],
+            "SecurityGroups": [
+                "sg-05502a4969a876f7f",
+                "sg-05cb0d24882b0bcd6",
+                "sg-048cb8e8f2ceefc80"
+            ],
+            "IpAddressType": "ipv4",
+            "EnablePrefixForIpv6SourceNat": "off"
+        },
+        {
+            "LoadBalancerArn": "arn:aws:elasticloadbalancing:ap-southeast-2:615890063537:loadbalancer/app/tf-dev-strong-motion-web/6f4966954cd4719c",
+            "DNSName": "tf-dev-strong-motion-web-1066951749.ap-southeast-2.elb.amazonaws.com",
+            "CanonicalHostedZoneId": "Z1GM3OXH4ZPM65",
+            "CreatedTime": "2023-08-14T22:18:56.920000+00:00",
+            "LoadBalancerName": "tf-dev-strong-motion-web",
+            "Scheme": "internet-facing",
+            "VpcId": "vpc-7585c412",
+            "State": {
+                "Code": "active"
+            },
+            "Type": "application",
+            "AvailabilityZones": [
+                {
+                    "ZoneName": "ap-southeast-2c",
+                    "SubnetId": "subnet-926fcbca",
+                    "LoadBalancerAddresses": []
+                },
+                {
+                    "ZoneName": "ap-southeast-2a",
+                    "SubnetId": "subnet-bcfaddf5",
+                    "LoadBalancerAddresses": []
+                },
+                {
+                    "ZoneName": "ap-southeast-2b",
+                    "SubnetId": "subnet-e8b49e8f",
+                    "LoadBalancerAddresses": []
+                }
+            ],
+            "SecurityGroups": [
+                "sg-05502a4969a876f7f",
+                "sg-048cb8e8f2ceefc80"
+            ],
+            "IpAddressType": "ipv4",
+            "EnablePrefixForIpv6SourceNat": "off"
+        },
+        {
+            "LoadBalancerArn": "arn:aws:elasticloadbalancing:ap-southeast-2:615890063537:loadbalancer/app/tf-dev-fmp-monitor-service/9235cb51c2f3f8c9",
+            "DNSName": "internal-tf-dev-fmp-monitor-service-1973384854.ap-southeast-2.elb.amazonaws.com",
+            "CanonicalHostedZoneId": "Z1GM3OXH4ZPM65",
+            "CreatedTime": "2023-08-14T22:47:45.210000+00:00",
+            "LoadBalancerName": "tf-dev-fmp-monitor-service",
+            "Scheme": "internal",
+            "VpcId": "vpc-00b1c367",
+            "State": {
+                "Code": "active"
+            },
+            "Type": "application",
+            "AvailabilityZones": [
+                {
+                    "ZoneName": "ap-southeast-2a",
+                    "SubnetId": "subnet-0184ef79bdcd7a991",
+                    "LoadBalancerAddresses": []
+                },
+                {
+                    "ZoneName": "ap-southeast-2c",
+                    "SubnetId": "subnet-037918859602cffcb",
+                    "LoadBalancerAddresses": []
+                },
+                {
+                    "ZoneName": "ap-southeast-2b",
+                    "SubnetId": "subnet-0a5fc65c5ec1abb7e",
+                    "LoadBalancerAddresses": []
+                }
+            ],
+            "SecurityGroups": [
+                "sg-0c228be9d79167a7a",
+                "sg-08573eae558272865"
+            ],
+            "IpAddressType": "ipv4",
+            "EnablePrefixForIpv6SourceNat": "off"
+        },
+        {
+            "LoadBalancerArn": "arn:aws:elasticloadbalancing:ap-southeast-2:615890063537:loadbalancer/app/tf-dev-tilde-manual-web/06faee63dfb3a781",
+            "DNSName": "internal-tf-dev-tilde-manual-web-1670268533.ap-southeast-2.elb.amazonaws.com",
+            "CanonicalHostedZoneId": "Z1GM3OXH4ZPM65",
+            "CreatedTime": "2023-10-31T22:59:11.390000+00:00",
+            "LoadBalancerName": "tf-dev-tilde-manual-web",
+            "Scheme": "internal",
+            "VpcId": "vpc-00b1c367",
+            "State": {
+                "Code": "active"
+            },
+            "Type": "application",
+            "AvailabilityZones": [
+                {
+                    "ZoneName": "ap-southeast-2a",
+                    "SubnetId": "subnet-0184ef79bdcd7a991",
+                    "LoadBalancerAddresses": []
+                },
+                {
+                    "ZoneName": "ap-southeast-2c",
+                    "SubnetId": "subnet-037918859602cffcb",
+                    "LoadBalancerAddresses": []
+                },
+                {
+                    "ZoneName": "ap-southeast-2b",
+                    "SubnetId": "subnet-0a5fc65c5ec1abb7e",
+                    "LoadBalancerAddresses": []
+                }
+            ],
+            "SecurityGroups": [
+                "sg-0c228be9d79167a7a",
+                "sg-08573eae558272865"
+            ],
+            "IpAddressType": "ipv4",
+            "EnablePrefixForIpv6SourceNat": "off"
+        },
+        {
+            "LoadBalancerArn": "arn:aws:elasticloadbalancing:ap-southeast-2:615890063537:loadbalancer/app/tf-dev-gloria-ws-service/5eb7c95a121f27e8",
+            "DNSName": "internal-tf-dev-gloria-ws-service-651991045.ap-southeast-2.elb.amazonaws.com",
+            "CanonicalHostedZoneId": "Z1GM3OXH4ZPM65",
+            "CreatedTime": "2024-02-15T00:40:26.430000+00:00",
+            "LoadBalancerName": "tf-dev-gloria-ws-service",
+            "Scheme": "internal",
+            "VpcId": "vpc-00b1c367",
+            "State": {
+                "Code": "active"
+            },
+            "Type": "application",
+            "AvailabilityZones": [
+                {
+                    "ZoneName": "ap-southeast-2a",
+                    "SubnetId": "subnet-0184ef79bdcd7a991",
+                    "LoadBalancerAddresses": []
+                },
+                {
+                    "ZoneName": "ap-southeast-2c",
+                    "SubnetId": "subnet-037918859602cffcb",
+                    "LoadBalancerAddresses": []
+                },
+                {
+                    "ZoneName": "ap-southeast-2b",
+                    "SubnetId": "subnet-0a5fc65c5ec1abb7e",
+                    "LoadBalancerAddresses": []
+                }
+            ],
+            "SecurityGroups": [
+                "sg-0c228be9d79167a7a",
+                "sg-08573eae558272865"
+            ],
+            "IpAddressType": "ipv4",
+            "EnablePrefixForIpv6SourceNat": "off"
+        },
+        {
+            "LoadBalancerArn": "arn:aws:elasticloadbalancing:ap-southeast-2:615890063537:loadbalancer/app/tf-dev-grafdash-web/14f54b60662e45d4",
+            "DNSName": "tf-dev-grafdash-web-1823419229.ap-southeast-2.elb.amazonaws.com",
+            "CanonicalHostedZoneId": "Z1GM3OXH4ZPM65",
+            "CreatedTime": "2024-06-24T23:00:51.470000+00:00",
+            "LoadBalancerName": "tf-dev-grafdash-web",
+            "Scheme": "internet-facing",
+            "VpcId": "vpc-7585c412",
+            "State": {
+                "Code": "active"
+            },
+            "Type": "application",
+            "AvailabilityZones": [
+                {
+                    "ZoneName": "ap-southeast-2c",
+                    "SubnetId": "subnet-926fcbca",
+                    "LoadBalancerAddresses": []
+                },
+                {
+                    "ZoneName": "ap-southeast-2a",
+                    "SubnetId": "subnet-bcfaddf5",
+                    "LoadBalancerAddresses": []
+                },
+                {
+                    "ZoneName": "ap-southeast-2b",
+                    "SubnetId": "subnet-e8b49e8f",
+                    "LoadBalancerAddresses": []
+                }
+            ],
+            "SecurityGroups": [
+                "sg-05502a4969a876f7f",
+                "sg-05cb0d24882b0bcd6",
+                "sg-048cb8e8f2ceefc80"
+            ],
+            "IpAddressType": "ipv4",
+            "EnablePrefixForIpv6SourceNat": "off"
+        },
+        {
+            "LoadBalancerArn": "arn:aws:elasticloadbalancing:ap-southeast-2:615890063537:loadbalancer/app/tf-dev-prometheus-mqtt/52b5dc3ee37d7658",
+            "DNSName": "internal-tf-dev-prometheus-mqtt-1080488098.ap-southeast-2.elb.amazonaws.com",
+            "CanonicalHostedZoneId": "Z1GM3OXH4ZPM65",
+            "CreatedTime": "2024-07-09T03:41:19.930000+00:00",
+            "LoadBalancerName": "tf-dev-prometheus-mqtt",
+            "Scheme": "internal",
+            "VpcId": "vpc-00b1c367",
+            "State": {
+                "Code": "active"
+            },
+            "Type": "application",
+            "AvailabilityZones": [
+                {
+                    "ZoneName": "ap-southeast-2b",
+                    "SubnetId": "subnet-5d02213a",
+                    "LoadBalancerAddresses": []
+                },
+                {
+                    "ZoneName": "ap-southeast-2c",
+                    "SubnetId": "subnet-c95d8091",
+                    "LoadBalancerAddresses": []
+                },
+                {
+                    "ZoneName": "ap-southeast-2a",
+                    "SubnetId": "subnet-fa164ab3",
+                    "LoadBalancerAddresses": []
+                }
+            ],
+            "SecurityGroups": [
+                "sg-08573eae558272865",
+                "sg-0874d7241f4d3f394"
+            ],
+            "IpAddressType": "ipv4",
+            "EnablePrefixForIpv6SourceNat": "off"
+        },
+        {
+            "LoadBalancerArn": "arn:aws:elasticloadbalancing:ap-southeast-2:615890063537:loadbalancer/app/k8s-geonetmo-ingressp-6202c493e1/15832ab5001cedcf",
+            "DNSName": "internal-k8s-geonetmo-ingressp-6202c493e1-1103369486.ap-southeast-2.elb.amazonaws.com",
+            "CanonicalHostedZoneId": "Z1GM3OXH4ZPM65",
+            "CreatedTime": "2024-07-22T04:44:46.680000+00:00",
+            "LoadBalancerName": "k8s-geonetmo-ingressp-6202c493e1",
+            "Scheme": "internal",
+            "VpcId": "vpc-00b1c367",
+            "State": {
+                "Code": "active"
+            },
+            "Type": "application",
+            "AvailabilityZones": [
+                {
+                    "ZoneName": "ap-southeast-2b",
+                    "SubnetId": "subnet-5d02213a",
+                    "LoadBalancerAddresses": []
+                },
+                {
+                    "ZoneName": "ap-southeast-2c",
+                    "SubnetId": "subnet-c95d8091",
+                    "LoadBalancerAddresses": []
+                },
+                {
+                    "ZoneName": "ap-southeast-2a",
+                    "SubnetId": "subnet-fa164ab3",
+                    "LoadBalancerAddresses": []
+                }
+            ],
+            "SecurityGroups": [
+                "sg-08a90a00d7bbe6264",
+                "sg-03aacb7bf83746f54"
+            ],
+            "IpAddressType": "ipv4",
+            "EnablePrefixForIpv6SourceNat": "off"
+        },
+        {
+            "LoadBalancerArn": "arn:aws:elasticloadbalancing:ap-southeast-2:615890063537:loadbalancer/app/tf-dev-fdsn-web/3c32298f22e2fd8d",
+            "DNSName": "tf-dev-fdsn-web-1308277073.ap-southeast-2.elb.amazonaws.com",
+            "CanonicalHostedZoneId": "Z1GM3OXH4ZPM65",
+            "CreatedTime": "2024-12-04T22:27:30.122000+00:00",
+            "LoadBalancerName": "tf-dev-fdsn-web",
+            "Scheme": "internet-facing",
+            "VpcId": "vpc-7585c412",
+            "State": {
+                "Code": "active"
+            },
+            "Type": "application",
+            "AvailabilityZones": [
+                {
+                    "ZoneName": "ap-southeast-2c",
+                    "SubnetId": "subnet-926fcbca",
+                    "LoadBalancerAddresses": []
+                },
+                {
+                    "ZoneName": "ap-southeast-2a",
+                    "SubnetId": "subnet-bcfaddf5",
+                    "LoadBalancerAddresses": []
+                },
+                {
+                    "ZoneName": "ap-southeast-2b",
+                    "SubnetId": "subnet-e8b49e8f",
+                    "LoadBalancerAddresses": []
+                }
+            ],
+            "SecurityGroups": [
+                "sg-05502a4969a876f7f",
+                "sg-05cb0d24882b0bcd6",
+                "sg-048cb8e8f2ceefc80"
+            ],
+            "IpAddressType": "ipv4",
+            "EnablePrefixForIpv6SourceNat": "off"
+        },
+        {
+            "LoadBalancerArn": "arn:aws:elasticloadbalancing:ap-southeast-2:615890063537:loadbalancer/app/tf-dev-fdsn-nrt-efs-web/17e967ea60dc1740",
+            "DNSName": "tf-dev-fdsn-nrt-efs-web-994599199.ap-southeast-2.elb.amazonaws.com",
+            "CanonicalHostedZoneId": "Z1GM3OXH4ZPM65",
+            "CreatedTime": "2024-12-05T00:13:59.581000+00:00",
+            "LoadBalancerName": "tf-dev-fdsn-nrt-efs-web",
+            "Scheme": "internet-facing",
+            "VpcId": "vpc-7585c412",
+            "State": {
+                "Code": "active"
+            },
+            "Type": "application",
+            "AvailabilityZones": [
+                {
+                    "ZoneName": "ap-southeast-2c",
+                    "SubnetId": "subnet-926fcbca",
+                    "LoadBalancerAddresses": []
+                },
+                {
+                    "ZoneName": "ap-southeast-2a",
+                    "SubnetId": "subnet-bcfaddf5",
+                    "LoadBalancerAddresses": []
+                },
+                {
+                    "ZoneName": "ap-southeast-2b",
+                    "SubnetId": "subnet-e8b49e8f",
+                    "LoadBalancerAddresses": []
+                }
+            ],
+            "SecurityGroups": [
+                "sg-05502a4969a876f7f",
+                "sg-0f032840678bbf279"
+            ],
+            "IpAddressType": "ipv4",
+            "EnablePrefixForIpv6SourceNat": "off"
+        },
+        {
+            "LoadBalancerArn": "arn:aws:elasticloadbalancing:ap-southeast-2:615890063537:loadbalancer/app/tf-dev-tg-server-web/ac576021f24f622c",
+            "DNSName": "internal-tf-dev-tg-server-web-1066043116.ap-southeast-2.elb.amazonaws.com",
+            "CanonicalHostedZoneId": "Z1GM3OXH4ZPM65",
+            "CreatedTime": "2025-01-14T21:07:51.658000+00:00",
+            "LoadBalancerName": "tf-dev-tg-server-web",
+            "Scheme": "internal",
+            "VpcId": "vpc-00b1c367",
+            "State": {
+                "Code": "active"
+            },
+            "Type": "application",
+            "AvailabilityZones": [
+                {
+                    "ZoneName": "ap-southeast-2a",
+                    "SubnetId": "subnet-0184ef79bdcd7a991",
+                    "LoadBalancerAddresses": []
+                },
+                {
+                    "ZoneName": "ap-southeast-2c",
+                    "SubnetId": "subnet-037918859602cffcb",
+                    "LoadBalancerAddresses": []
+                },
+                {
+                    "ZoneName": "ap-southeast-2b",
+                    "SubnetId": "subnet-0a5fc65c5ec1abb7e",
+                    "LoadBalancerAddresses": []
+                }
+            ],
+            "SecurityGroups": [
+                "sg-0c228be9d79167a7a",
+                "sg-08573eae558272865"
+            ],
+            "IpAddressType": "ipv4",
+            "EnablePrefixForIpv6SourceNat": "off"
+        },
+        {
+            "LoadBalancerArn": "arn:aws:elasticloadbalancing:ap-southeast-2:615890063537:loadbalancer/app/tf-dev-geocodenz-web/4037d0721c05ef0a",
+            "DNSName": "tf-dev-geocodenz-web-1552049305.ap-southeast-2.elb.amazonaws.com",
+            "CanonicalHostedZoneId": "Z1GM3OXH4ZPM65",
+            "CreatedTime": "2025-01-20T23:23:31.444000+00:00",
+            "LoadBalancerName": "tf-dev-geocodenz-web",
+            "Scheme": "internet-facing",
+            "VpcId": "vpc-7585c412",
+            "State": {
+                "Code": "active"
+            },
+            "Type": "application",
+            "AvailabilityZones": [
+                {
+                    "ZoneName": "ap-southeast-2c",
+                    "SubnetId": "subnet-926fcbca",
+                    "LoadBalancerAddresses": []
+                },
+                {
+                    "ZoneName": "ap-southeast-2a",
+                    "SubnetId": "subnet-bcfaddf5",
+                    "LoadBalancerAddresses": []
+                },
+                {
+                    "ZoneName": "ap-southeast-2b",
+                    "SubnetId": "subnet-e8b49e8f",
+                    "LoadBalancerAddresses": []
+                }
+            ],
+            "SecurityGroups": [
+                "sg-05502a4969a876f7f",
+                "sg-05cb0d24882b0bcd6",
+                "sg-048cb8e8f2ceefc80"
+            ],
+            "IpAddressType": "ipv4",
+            "EnablePrefixForIpv6SourceNat": "off"
+        },
+        {
+            "LoadBalancerArn": "arn:aws:elasticloadbalancing:ap-southeast-2:615890063537:loadbalancer/app/tf-dev-quakesearch-web/3f5cc7b3c0982daa",
+            "DNSName": "tf-dev-quakesearch-web-502805779.ap-southeast-2.elb.amazonaws.com",
+            "CanonicalHostedZoneId": "Z1GM3OXH4ZPM65",
+            "CreatedTime": "2025-05-16T03:38:40.548000+00:00",
+            "LoadBalancerName": "tf-dev-quakesearch-web",
+            "Scheme": "internet-facing",
+            "VpcId": "vpc-7585c412",
+            "State": {
+                "Code": "active"
+            },
+            "Type": "application",
+            "AvailabilityZones": [
+                {
+                    "ZoneName": "ap-southeast-2c",
+                    "SubnetId": "subnet-926fcbca",
+                    "LoadBalancerAddresses": []
+                },
+                {
+                    "ZoneName": "ap-southeast-2a",
+                    "SubnetId": "subnet-bcfaddf5",
+                    "LoadBalancerAddresses": []
+                },
+                {
+                    "ZoneName": "ap-southeast-2b",
+                    "SubnetId": "subnet-e8b49e8f",
+                    "LoadBalancerAddresses": []
+                }
+            ],
+            "SecurityGroups": [
+                "sg-05502a4969a876f7f",
+                "sg-0f032840678bbf279"
+            ],
+            "IpAddressType": "ipv4",
+            "EnablePrefixForIpv6SourceNat": "off"
+        },
+        {
+            "LoadBalancerArn": "arn:aws:elasticloadbalancing:ap-southeast-2:615890063537:loadbalancer/app/tf-dev-globe-ws-service/448948c01643e461",
+            "DNSName": "tf-dev-globe-ws-service-1452218254.ap-southeast-2.elb.amazonaws.com",
+            "CanonicalHostedZoneId": "Z1GM3OXH4ZPM65",
+            "CreatedTime": "2025-05-26T23:41:28.159000+00:00",
+            "LoadBalancerName": "tf-dev-globe-ws-service",
+            "Scheme": "internet-facing",
+            "VpcId": "vpc-7585c412",
+            "State": {
+                "Code": "active"
+            },
+            "Type": "application",
+            "AvailabilityZones": [
+                {
+                    "ZoneName": "ap-southeast-2c",
+                    "SubnetId": "subnet-926fcbca",
+                    "LoadBalancerAddresses": []
+                },
+                {
+                    "ZoneName": "ap-southeast-2a",
+                    "SubnetId": "subnet-bcfaddf5",
+                    "LoadBalancerAddresses": []
+                },
+                {
+                    "ZoneName": "ap-southeast-2b",
+                    "SubnetId": "subnet-e8b49e8f",
+                    "LoadBalancerAddresses": []
+                }
+            ],
+            "SecurityGroups": [
+                "sg-05502a4969a876f7f",
+                "sg-05cb0d24882b0bcd6",
+                "sg-048cb8e8f2ceefc80"
+            ],
+            "IpAddressType": "ipv4",
+            "EnablePrefixForIpv6SourceNat": "off"
+        },
+        {
+            "LoadBalancerArn": "arn:aws:elasticloadbalancing:ap-southeast-2:615890063537:loadbalancer/app/tf-dev-wfs-web/fb9fa546b6c2a66b",
+            "DNSName": "tf-dev-wfs-web-1032834155.ap-southeast-2.elb.amazonaws.com",
+            "CanonicalHostedZoneId": "Z1GM3OXH4ZPM65",
+            "CreatedTime": "2025-07-17T01:32:04.121000+00:00",
+            "LoadBalancerName": "tf-dev-wfs-web",
+            "Scheme": "internet-facing",
+            "VpcId": "vpc-7585c412",
+            "State": {
+                "Code": "active"
+            },
+            "Type": "application",
+            "AvailabilityZones": [
+                {
+                    "ZoneName": "ap-southeast-2c",
+                    "SubnetId": "subnet-926fcbca",
+                    "LoadBalancerAddresses": []
+                },
+                {
+                    "ZoneName": "ap-southeast-2a",
+                    "SubnetId": "subnet-bcfaddf5",
+                    "LoadBalancerAddresses": []
+                },
+                {
+                    "ZoneName": "ap-southeast-2b",
+                    "SubnetId": "subnet-e8b49e8f",
+                    "LoadBalancerAddresses": []
+                }
+            ],
+            "SecurityGroups": [
+                "sg-05502a4969a876f7f",
+                "sg-0f032840678bbf279"
+            ],
+            "IpAddressType": "ipv4",
+            "EnablePrefixForIpv6SourceNat": "off"
+        },
+        {
+            "LoadBalancerArn": "arn:aws:elasticloadbalancing:ap-southeast-2:615890063537:loadbalancer/app/hello-internal/51b64abe9cbc232d",
+            "DNSName": "internal-hello-internal-242954434.ap-southeast-2.elb.amazonaws.com",
+            "CanonicalHostedZoneId": "Z1GM3OXH4ZPM65",
+            "CreatedTime": "2025-08-21T21:42:09.160000+00:00",
+            "LoadBalancerName": "hello-internal",
+            "Scheme": "internal",
+            "VpcId": "vpc-00b1c367",
+            "State": {
+                "Code": "active"
+            },
+            "Type": "application",
+            "AvailabilityZones": [
+                {
+                    "ZoneName": "ap-southeast-2a",
+                    "SubnetId": "subnet-0184ef79bdcd7a991",
+                    "LoadBalancerAddresses": []
+                },
+                {
+                    "ZoneName": "ap-southeast-2c",
+                    "SubnetId": "subnet-037918859602cffcb",
+                    "LoadBalancerAddresses": []
+                },
+                {
+                    "ZoneName": "ap-southeast-2b",
+                    "SubnetId": "subnet-0a5fc65c5ec1abb7e",
+                    "LoadBalancerAddresses": []
+                }
+            ],
+            "SecurityGroups": [
+                "sg-0595f856f079af148",
+                "sg-09dbe2d51acc2d33c"
+            ],
+            "IpAddressType": "ipv4",
+            "EnablePrefixForIpv6SourceNat": "off"
+        },
+        {
+            "LoadBalancerArn": "arn:aws:elasticloadbalancing:ap-southeast-2:615890063537:loadbalancer/app/waf-95it/11e9f78f4483f568",
+            "DNSName": "waf-95it-280524678.ap-southeast-2.elb.amazonaws.com",
+            "CanonicalHostedZoneId": "Z1GM3OXH4ZPM65",
+            "CreatedTime": "2025-09-22T01:10:56.985000+00:00",
+            "LoadBalancerName": "waf-95it",
+            "Scheme": "internet-facing",
+            "VpcId": "vpc-0d8e4491536e51eaa",
+            "State": {
+                "Code": "active"
+            },
+            "Type": "application",
+            "AvailabilityZones": [
+                {
+                    "ZoneName": "ap-southeast-2c",
+                    "SubnetId": "subnet-017a4d4990d937c8f",
+                    "LoadBalancerAddresses": []
+                },
+                {
+                    "ZoneName": "ap-southeast-2b",
+                    "SubnetId": "subnet-05333d2364e78b987",
+                    "LoadBalancerAddresses": []
+                },
+                {
+                    "ZoneName": "ap-southeast-2a",
+                    "SubnetId": "subnet-0d1d11a6f98c8d488",
+                    "LoadBalancerAddresses": []
+                }
+            ],
+            "SecurityGroups": [
+                "sg-048b0930f43510cba"
+            ],
+            "IpAddressType": "ipv4",
+            "EnablePrefixForIpv6SourceNat": "off"
+        },
+        {
+            "LoadBalancerArn": "arn:aws:elasticloadbalancing:ap-southeast-2:615890063537:loadbalancer/app/tf-lb-20250923032241737700000002/f75de9576523b20a",
+            "DNSName": "tf-lb-20250923032241737700000002-820910670.ap-southeast-2.elb.amazonaws.com",
+            "CanonicalHostedZoneId": "Z1GM3OXH4ZPM65",
+            "CreatedTime": "2025-09-23T03:22:42.991000+00:00",
+            "LoadBalancerName": "tf-lb-20250923032241737700000002",
+            "Scheme": "internet-facing",
+            "VpcId": "vpc-00b1c367",
+            "State": {
+                "Code": "active"
+            },
+            "Type": "application",
+            "AvailabilityZones": [
+                {
+                    "ZoneName": "ap-southeast-2a",
+                    "SubnetId": "subnet-0184ef79bdcd7a991",
+                    "LoadBalancerAddresses": []
+                },
+                {
+                    "ZoneName": "ap-southeast-2c",
+                    "SubnetId": "subnet-037918859602cffcb",
+                    "LoadBalancerAddresses": []
+                },
+                {
+                    "ZoneName": "ap-southeast-2b",
+                    "SubnetId": "subnet-0a5fc65c5ec1abb7e",
+                    "LoadBalancerAddresses": []
+                }
+            ],
+            "SecurityGroups": [
+                "sg-0595f856f079af148",
+                "sg-09dbe2d51acc2d33c"
+            ],
+            "IpAddressType": "ipv4",
+            "EnablePrefixForIpv6SourceNat": "off"
+        },
+        {
+            "LoadBalancerArn": "arn:aws:elasticloadbalancing:ap-southeast-2:615890063537:loadbalancer/app/tf-dev-geonet-rest-api/82621e110359dde9",
+            "DNSName": "tf-dev-geonet-rest-api-1650139044.ap-southeast-2.elb.amazonaws.com",
+            "CanonicalHostedZoneId": "Z1GM3OXH4ZPM65",
+            "CreatedTime": "2024-11-08T03:03:45.548000+00:00",
+            "LoadBalancerName": "tf-dev-geonet-rest-api",
+            "Scheme": "internet-facing",
+            "VpcId": "vpc-7585c412",
+            "State": {
+                "Code": "active"
+            },
+            "Type": "application",
+            "AvailabilityZones": [
+                {
+                    "ZoneName": "ap-southeast-2c",
+                    "SubnetId": "subnet-926fcbca",
+                    "LoadBalancerAddresses": []
+                },
+                {
+                    "ZoneName": "ap-southeast-2a",
+                    "SubnetId": "subnet-bcfaddf5",
+                    "LoadBalancerAddresses": []
+                },
+                {
+                    "ZoneName": "ap-southeast-2b",
+                    "SubnetId": "subnet-e8b49e8f",
+                    "LoadBalancerAddresses": []
+                }
+            ],
+            "SecurityGroups": [
+                "sg-05502a4969a876f7f",
+                "sg-05cb0d24882b0bcd6",
+                "sg-048cb8e8f2ceefc80"
+            ],
+            "IpAddressType": "ipv4",
+            "EnablePrefixForIpv6SourceNat": "off"
+        },
+        {
+            "LoadBalancerArn": "arn:aws:elasticloadbalancing:ap-southeast-2:615890063537:loadbalancer/app/tf-dev-ashfall-tool/cc9b166a6397a7bc",
+            "DNSName": "internal-tf-dev-ashfall-tool-1892445099.ap-southeast-2.elb.amazonaws.com",
+            "CanonicalHostedZoneId": "Z1GM3OXH4ZPM65",
+            "CreatedTime": "2024-11-04T21:28:41.138000+00:00",
+            "LoadBalancerName": "tf-dev-ashfall-tool",
+            "Scheme": "internal",
+            "VpcId": "vpc-00b1c367",
+            "State": {
+                "Code": "active"
+            },
+            "Type": "application",
+            "AvailabilityZones": [
+                {
+                    "ZoneName": "ap-southeast-2a",
+                    "SubnetId": "subnet-0184ef79bdcd7a991",
+                    "LoadBalancerAddresses": []
+                },
+                {
+                    "ZoneName": "ap-southeast-2c",
+                    "SubnetId": "subnet-037918859602cffcb",
+                    "LoadBalancerAddresses": []
+                },
+                {
+                    "ZoneName": "ap-southeast-2b",
+                    "SubnetId": "subnet-0a5fc65c5ec1abb7e",
+                    "LoadBalancerAddresses": []
+                }
+            ],
+            "SecurityGroups": [
+                "sg-0c228be9d79167a7a",
+                "sg-08573eae558272865"
+            ],
+            "IpAddressType": "ipv4",
+            "EnablePrefixForIpv6SourceNat": "off"
+        }
+    ]
+}
+
+CloudWatch Log Groups:
+{
+    "logGroups": [
+        {
+            "logGroupName": "/aws/eks/cltest/cluster",
+            "creationTime": 1758657236077,
+            "metricFilterCount": 0,
+            "arn": "arn:aws:logs:ap-southeast-2:615890063537:log-group:/aws/eks/cltest/cluster:*",
+            "storedBytes": 0,
+            "logGroupClass": "STANDARD",
+            "logGroupArn": "arn:aws:logs:ap-southeast-2:615890063537:log-group:/aws/eks/cltest/cluster"
+        }
+    ]
+}
+
+Kubernetes Resources:
+Unable to connect to the server: dial tcp: lookup 757B3AD8D5986187133DADAD4978770C.gr7.ap-southeast-2.eks.amazonaws.com on 127.0.0.53:53: no such host
+Unable to connect to the server: dial tcp: lookup 757B3AD8D5986187133DADAD4978770C.gr7.ap-southeast-2.eks.amazonaws.com on 127.0.0.53:53: no such host
+Unable to connect to the server: dial tcp: lookup 757B3AD8D5986187133DADAD4978770C.gr7.ap-southeast-2.eks.amazonaws.com on 127.0.0.53:53: no such host
+Unable to connect to the server: dial tcp: lookup 757B3AD8D5986187133DADAD4978770C.gr7.ap-southeast-2.eks.amazonaws.com on 127.0.0.53:53: no such host
+Unable to connect to the server: dial tcp: lookup 757B3AD8D5986187133DADAD4978770C.gr7.ap-southeast-2.eks.amazonaws.com on 127.0.0.53:53: no such host
+Unable to connect to the server: dial tcp: lookup 757B3AD8D5986187133DADAD4978770C.gr7.ap-southeast-2.eks.amazonaws.com on 127.0.0.53:53: no such host
+Unable to connect to the server: dial tcp: lookup 757B3AD8D5986187133DADAD4978770C.gr7.ap-southeast-2.eks.amazonaws.com on 127.0.0.53:53: no such host
+Unable to connect to the server: dial tcp: lookup 757B3AD8D5986187133DADAD4978770C.gr7.ap-southeast-2.eks.amazonaws.com on 127.0.0.53:53: no such host
+Unable to connect to the server: dial tcp: lookup 757B3AD8D5986187133DADAD4978770C.gr7.ap-southeast-2.eks.amazonaws.com on 127.0.0.53:53: no such host
+Unable to connect to the server: dial tcp: lookup 757B3AD8D5986187133DADAD4978770C.gr7.ap-southeast-2.eks.amazonaws.com on 127.0.0.53:53: no such host
+Failed
+
+Helm Releases:
+./troubleshoot-destroy.sh: line 244: helm: command not found
+Failed

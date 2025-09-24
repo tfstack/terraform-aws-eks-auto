@@ -26,6 +26,103 @@ resource "kubernetes_namespace" "this" {
     labels      = merge(local.common_labels, var.namespace_metadata.labels)
     annotations = var.namespace_metadata.annotations
   }
+
+  # Handle cluster deletion gracefully
+  lifecycle {
+    ignore_changes = [
+      metadata[0].annotations,
+      metadata[0].labels
+    ]
+  }
+
+  timeouts {
+    delete = "2m"
+  }
+}
+
+#########################################
+# ALB Security Groups
+#########################################
+
+# Security group for ALB (Load Balancer)
+resource "aws_security_group" "alb" {
+  count = var.create_ingress ? 1 : 0
+
+  name_prefix = "${var.cluster_name}-${var.name}-alb-"
+  description = "[k8s] Managed SecurityGroup for LoadBalancer"
+  vpc_id      = var.vpc_id
+
+  ingress {
+    description = "HTTP"
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    description = "HTTPS"
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = merge(
+    var.tags,
+    {
+      "ingress.k8s.aws/resource" = "ManagedLBSecurityGroup"
+      "ingress.k8s.aws/stack"    = var.name
+      "elbv2.k8s.aws/cluster"    = var.cluster_name
+    }
+  )
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+# Security group for ALB backend (targets)
+resource "aws_security_group" "alb_backend" {
+  count = var.create_ingress ? 1 : 0
+
+  name_prefix = "${var.cluster_name}-${var.name}-backend-"
+  description = "[k8s] Shared Backend SecurityGroup for LoadBalancer"
+  vpc_id      = var.vpc_id
+
+  ingress {
+    description     = "ALB to targets"
+    from_port       = var.service_port
+    to_port         = var.service_port
+    protocol        = "tcp"
+    security_groups = [aws_security_group.alb[0].id]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = merge(
+    var.tags,
+    {
+      "elbv2.k8s.aws/resource" = "backend-sg"
+      "elbv2.k8s.aws/cluster"  = var.cluster_name
+    }
+  )
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 #########################################
@@ -74,6 +171,14 @@ resource "kubernetes_service_account" "this" {
     annotations = var.irsa.enabled ? {
       "eks.amazonaws.com/role-arn" = aws_iam_role.irsa[0].arn
     } : {}
+  }
+
+  # Handle cluster deletion gracefully
+  lifecycle {
+    ignore_changes = [
+      metadata[0].annotations,
+      metadata[0].labels
+    ]
   }
 
   depends_on = [kubernetes_namespace.this]
@@ -218,6 +323,20 @@ resource "kubernetes_deployment" "this" {
     }
   }
 
+  # Handle cluster deletion gracefully
+  lifecycle {
+    ignore_changes = [
+      metadata[0].annotations,
+      metadata[0].labels,
+      spec[0].template[0].metadata[0].annotations,
+      spec[0].template[0].metadata[0].labels
+    ]
+  }
+
+  timeouts {
+    delete = "2m"
+  }
+
   depends_on = [
     kubernetes_service_account.this,
     kubernetes_config_map.this
@@ -274,6 +393,8 @@ resource "kubernetes_ingress_v1" "this" {
         "alb.ingress.kubernetes.io/scheme"                              = var.ingress_scheme
         "alb.ingress.kubernetes.io/group.name"                          = var.name
         "alb.ingress.kubernetes.io/manage-backend-security-group-rules" = "false"
+        "alb.ingress.kubernetes.io/security-groups"                     = aws_security_group.alb[0].id
+        "alb.ingress.kubernetes.io/backend-security-groups"             = aws_security_group.alb_backend[0].id
       }
     )
   }
@@ -316,7 +437,7 @@ resource "kubernetes_ingress_v1" "this" {
 
   timeouts {
     create = "5m"
-    delete = "5m"
+    delete = "10m"
   }
 
   depends_on = [kubernetes_service.this]

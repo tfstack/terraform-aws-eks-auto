@@ -67,3 +67,13 @@ output "alb_url" {
     null
   ) : null
 }
+
+output "alb_security_group_id" {
+  description = "ID of the ALB security group"
+  value       = var.create_ingress ? aws_security_group.alb[0].id : null
+}
+
+output "alb_backend_security_group_id" {
+  description = "ID of the ALB backend security group"
+  value       = var.create_ingress ? aws_security_group.alb_backend[0].id : null
+}

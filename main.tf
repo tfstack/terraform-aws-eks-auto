@@ -117,8 +117,10 @@ module "workloads" {
   name         = each.value.name
   namespace    = each.value.namespace
   cluster_name = module.cluster.cluster_name
+  vpc_id       = module.cluster.vpc_id
   replicas     = each.value.replicas
   labels       = each.value.labels
+  tags         = var.tags
 
   create_namespace   = each.value.create_namespace
   namespace_metadata = each.value.namespace_metadata
@@ -148,7 +150,6 @@ module "workloads" {
   ingress_rules       = each.value.ingress_rules
 
   logging = each.value.logging
-  tags    = merge(var.tags, each.value.tags)
 
   depends_on = [
     module.container_insights

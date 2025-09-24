@@ -1,0 +1,58 @@
+{
+  "mcpServers": {
+    "aws": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-aws@latest"],
+      "env": {
+        "AWS_PROFILE": "dev"
+      }
+    },
+    "kubernetes": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-kubernetes@latest"],
+      "env": {
+        "KUBECONFIG": "/tmp/kubeconfig"
+      }
+    },
+    "terraform": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-terraform@latest"],
+      "env": {
+        "TF_WORKSPACE": "default"
+      }
+    },
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem@latest"]
+    },
+    "memory": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-memory@latest"]
+    },
+    "brave-search": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-brave-search@latest"],
+      "env": {
+        "BRAVE_API_KEY": "your-brave-api-key-here"
+      }
+    },
+    "fetch": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-fetch@latest"]
+    },
+    "postgres": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-postgres@latest"],
+      "env": {
+        "POSTGRES_CONNECTION_STRING": "postgresql://user:password@localhost:5432/dbname"
+      }
+    },
+    "sqlite": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-sqlite@latest"],
+      "env": {
+        "SQLITE_DB_PATH": "/tmp/terraform-troubleshooting.db"
+      }
+    }
+  }
+}

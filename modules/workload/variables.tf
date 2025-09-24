@@ -24,6 +24,23 @@ variable "cluster_name" {
   type        = string
 }
 
+variable "vpc_id" {
+  description = "VPC ID where the security groups will be created"
+  type        = string
+}
+
+variable "service_port" {
+  description = "Port number for the service"
+  type        = number
+  default     = 80
+}
+
+variable "tags" {
+  description = "Tags to apply to resources"
+  type        = map(string)
+  default     = {}
+}
+
 variable "replicas" {
   description = "Number of replicas for the deployment"
   type        = number
@@ -212,10 +229,4 @@ variable "ingress_rules" {
     }))
   }))
   default = []
-}
-
-variable "tags" {
-  description = "Tags to apply to resources"
-  type        = map(string)
-  default     = {}
 }
