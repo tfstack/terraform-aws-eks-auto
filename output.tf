@@ -18,3 +18,13 @@ output "eks_cluster_auth_token" {
   value       = module.cluster.eks_cluster_auth_token
   sensitive   = true
 }
+
+output "oidc_provider_arn" {
+  description = "ARN of the OIDC provider for IRSA"
+  value       = module.cluster.oidc_provider_arn
+}
+
+output "oidc_provider_url" {
+  description = "URL of the OIDC provider for IRSA"
+  value       = module.cluster.oidc_provider_url
+}

@@ -214,6 +214,36 @@ variable "ingress_rules" {
   default = []
 }
 
+variable "ingress_health_check_path" {
+  description = "Health check path for the ALB"
+  type        = string
+  default     = "/"
+}
+
+variable "ingress_health_check_interval" {
+  description = "Health check interval in seconds for the ALB"
+  type        = number
+  default     = 15
+}
+
+variable "ingress_health_check_timeout" {
+  description = "Health check timeout in seconds for the ALB"
+  type        = number
+  default     = 5
+}
+
+variable "ingress_health_check_healthy_threshold" {
+  description = "Number of consecutive health checks successes before considering target healthy"
+  type        = number
+  default     = 2
+}
+
+variable "ingress_health_check_unhealthy_threshold" {
+  description = "Number of consecutive health check failures before considering target unhealthy"
+  type        = number
+  default     = 3
+}
+
 variable "tags" {
   description = "Tags to apply to resources"
   type        = map(string)

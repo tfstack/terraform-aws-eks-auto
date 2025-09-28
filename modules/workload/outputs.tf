@@ -58,6 +58,8 @@ output "alb_dns_name" {
     kubernetes_ingress_v1.this[0].status[0].load_balancer[0].ingress[0].hostname,
     null
   ) : null
+
+  depends_on = [kubernetes_ingress_v1.this]
 }
 
 output "alb_url" {
@@ -66,4 +68,6 @@ output "alb_url" {
     "${var.ingress_protocol}://${kubernetes_ingress_v1.this[0].status[0].load_balancer[0].ingress[0].hostname}",
     null
   ) : null
+
+  depends_on = [kubernetes_ingress_v1.this]
 }
