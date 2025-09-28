@@ -270,15 +270,22 @@ resource "kubernetes_ingress_v1" "this" {
     annotations = merge(
       var.ingress_annotations,
       {
-        "kubernetes.io/ingress.class"                                   = "alb"
         "alb.ingress.kubernetes.io/scheme"                              = var.ingress_scheme
         "alb.ingress.kubernetes.io/group.name"                          = var.name
+        "alb.ingress.kubernetes.io/target-type"                         = "ip"
         "alb.ingress.kubernetes.io/manage-backend-security-group-rules" = "false"
+        "alb.ingress.kubernetes.io/healthcheck-path"                    = var.ingress_health_check_path
+        "alb.ingress.kubernetes.io/healthcheck-interval-seconds"        = tostring(var.ingress_health_check_interval)
+        "alb.ingress.kubernetes.io/healthcheck-timeout-seconds"         = tostring(var.ingress_health_check_timeout)
+        "alb.ingress.kubernetes.io/healthy-threshold-count"             = tostring(var.ingress_health_check_healthy_threshold)
+        "alb.ingress.kubernetes.io/unhealthy-threshold-count"           = tostring(var.ingress_health_check_unhealthy_threshold)
       }
     )
   }
 
   spec {
+    ingress_class_name = "alb"
+
     dynamic "rule" {
       for_each = var.ingress_rules
       content {
@@ -319,5 +326,8 @@ resource "kubernetes_ingress_v1" "this" {
     delete = "10m" # Increased timeout for cleanup issues
   }
 
-  depends_on = [kubernetes_service.this]
+  depends_on = [
+    kubernetes_service.this,
+    kubernetes_deployment.this
+  ]
 }
