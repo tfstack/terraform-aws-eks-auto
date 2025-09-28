@@ -81,4 +81,6 @@ No resources.
 | <a name="output_eks_cluster_auth_token"></a> [eks\_cluster\_auth\_token](#output\_eks\_cluster\_auth\_token) | Authentication token for the EKS cluster (used by kubectl and SDKs) |
 | <a name="output_eks_cluster_ca_cert"></a> [eks\_cluster\_ca\_cert](#output\_eks\_cluster\_ca\_cert) | The base64-decoded certificate authority data for the EKS cluster |
 | <a name="output_eks_cluster_endpoint"></a> [eks\_cluster\_endpoint](#output\_eks\_cluster\_endpoint) | The endpoint URL of the EKS cluster |
+| <a name="output_oidc_provider_arn"></a> [oidc\_provider\_arn](#output\_oidc\_provider\_arn) | ARN of the OIDC provider for IRSA |
+| <a name="output_oidc_provider_url"></a> [oidc\_provider\_url](#output\_oidc\_provider\_url) | URL of the OIDC provider for IRSA |
 <!-- END_TF_DOCS -->
